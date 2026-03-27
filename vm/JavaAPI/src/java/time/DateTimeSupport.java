@@ -1,5 +1,6 @@
 package java.time;
 
+import com.codename1.impl.time.TimeZoneSupport;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -7,7 +8,7 @@ import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
 
-public final class DateTimeSupport {
+final class DateTimeSupport {
     static final long MILLIS_PER_SECOND = 1000L;
     static final long MILLIS_PER_DAY = 86400000L;
     static final long SECONDS_PER_DAY = 86400L;
@@ -181,7 +182,7 @@ public final class DateTimeSupport {
     }
 
     public static ZoneOffset offsetFromInstant(Instant instant, ZoneId zone) {
-        TimeZone tz = zone.toTimeZone();
+        TimeZone tz = TimeZoneSupport.toTimeZone(zone);
         Calendar cal = newCalendar(TimeZone.getTimeZone("GMT"));
         cal.setTime(new Date(instant.toEpochMilli()));
         int offsetMillis = tz.getOffset(
@@ -206,7 +207,7 @@ public final class DateTimeSupport {
         TimeZone original = TimeZone.getDefault();
         try {
             if (zone != null) {
-                TimeZone.setDefault(zone.toTimeZone());
+                TimeZone.setDefault(TimeZoneSupport.toTimeZone(zone));
             }
             return sdf.format(new Date(carrier.toInstant().toEpochMilli()));
         } finally {
@@ -218,7 +219,7 @@ public final class DateTimeSupport {
         TimeZone original = TimeZone.getDefault();
         try {
             if (defaultZone != null) {
-                TimeZone.setDefault(defaultZone.toTimeZone());
+                TimeZone.setDefault(TimeZoneSupport.toTimeZone(defaultZone));
             }
             SimpleDateFormat sdf = newFormat(pattern, defaultZone, locale);
             Date date = sdf.parse(text);
