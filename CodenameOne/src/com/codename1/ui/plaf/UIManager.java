@@ -1937,13 +1937,27 @@ public class UIManager {
     }
 
     Style createStyle(String id, String prefix, boolean selected) {
+        return createStyle(id, prefix, selected, true);
+    }
+
+    private Style createStyle(String id, String prefix, boolean selected, boolean allowDarkStyle) {
         Style style;
         String originalId = id;
         if (prefix != null && prefix.length() > 0) {
             id += prefix;
         }
+        boolean useDarkStyle = allowDarkStyle && shouldUseDarkStyle(id);
+        if (useDarkStyle) {
+            id = "$Dark" + id;
+        }
+
         String baseStyle = (String) themeProps.get(id + "derive");
-        if (baseStyle != null) {
+        if (baseStyle == null && useDarkStyle) {
+            style = new Style(createStyle(originalId, prefix, selected, false));
+        } else {
+            style = null;
+        }
+        if (style == null && baseStyle != null) {
             if (baseStyle.indexOf('.') > -1 && baseStyle.indexOf('#') < 0) {
                 baseStyle += "#";
             }
@@ -1964,7 +1978,7 @@ public class UIManager {
                     style = new Style(defaultStyle);
                 }
             }
-        } else {
+        } else if (style == null) {
             if (selected) {
                 style = new Style(defaultSelectedStyle);
             } else {
@@ -2126,6 +2140,23 @@ public class UIManager {
         }
 
         return style;
+    }
+
+    private boolean shouldUseDarkStyle(String id) {
+        if (themeProps == null || id == null || id.length() == 0 || id.startsWith("$Dark")) {
+            return false;
+        }
+        Boolean darkMode = CN.isDarkMode();
+        return darkMode != null && darkMode.booleanValue() && hasStyleDefinition("$Dark" + id);
+    }
+
+    private boolean hasStyleDefinition(String styleId) {
+        for (String key : themeProps.keySet()) {
+            if (key.startsWith(styleId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /// This method is used to parse the margin and the padding
