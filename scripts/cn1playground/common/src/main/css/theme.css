@@ -118,17 +118,6 @@ SideCommand {
     border-bottom: 2px solid #cccccc;
 }
 
-SideCommandDark {
-    padding: 1mm;
-    border: none;
-    text-decoration: none;
-    color: #e5e7eb;
-    background: #0f172a;
-    font-family: "native:MainLight";
-    font-size: 4mm;
-    border-bottom: 2px solid #1f2937;
-}
-
 StatusBarSideMenu {
     background: white;
     padding: 0mm;
@@ -151,13 +140,8 @@ PlaygroundSideCommand {
 }
 
 PlaygroundSideCommandDark {
-    padding: 1mm;
-    border: none;
-    text-decoration: none;
     color: #e5e7eb;
     background: #0f172a;
-    font-family: "native:MainLight";
-    font-size: 4mm;
     border-bottom: 2px solid #1f2937;
 }
 
@@ -170,9 +154,6 @@ PlaygroundMenuSection {
 }
 
 PlaygroundMenuSectionDark {
-    padding: 2mm 1mm 0.5mm 1mm;
-    margin: 1mm 0 0 0;
-    border: none;
     border-bottom: 1px solid #334155;
     background: #0f172a;
 }
@@ -187,10 +168,6 @@ PlaygroundMenuSectionTitle {
 
 PlaygroundMenuSectionTitleDark {
     color: #94a3b8;
-    font-family: "native:MainBold";
-    font-size: 2.6mm;
-    text-decoration: none;
-    padding: 0 0 1mm 0;
 }
 
 PlaygroundMenuEmpty {
@@ -202,9 +179,6 @@ PlaygroundMenuEmpty {
 
 PlaygroundMenuEmptyDark {
     color: #94a3b8;
-    font-family: "native:MainLight";
-    font-size: 3mm;
-    padding: 1mm;
     background: #0f172a;
 }
 
@@ -214,6 +188,79 @@ PlaygroundMenuContainer {
 
 PlaygroundMenuContainerDark {
     background: #0f172a;
+}
+
+@media (prefers-color-scheme: dark) {
+    SideNavigationPanel {
+        background: #0f172a;
+    }
+    SideNavigationPanelDark {
+        background: #0f172a;
+    }
+
+    SideCommand {
+        color: #e5e7eb;
+        background: #0f172a;
+        border-bottom: 2px solid #1f2937;
+    }
+
+    StatusBarSideMenu {
+        background: #0f172a;
+    }
+    StatusBarSideMenuDark {
+        background: #0f172a;
+    }
+
+    PlaygroundSideCommand {
+        color: #e5e7eb;
+        background: #0f172a;
+        border-bottom: 2px solid #1f2937;
+    }
+    PlaygroundSideCommandDark {
+        color: #e5e7eb;
+        background: #0f172a;
+        border-bottom: 2px solid #1f2937;
+    }
+
+    PlaygroundSideCommandLine1 {
+        color: #f8fafc;
+    }
+
+    PlaygroundSideCommandLine2 {
+        color: #94a3b8;
+    }
+
+    PlaygroundMenuSection {
+        border-bottom: 1px solid #334155;
+        background: #0f172a;
+    }
+    PlaygroundMenuSectionDark {
+        border-bottom: 1px solid #334155;
+        background: #0f172a;
+    }
+
+    PlaygroundMenuSectionTitle {
+        color: #94a3b8;
+    }
+    PlaygroundMenuSectionTitleDark {
+        color: #94a3b8;
+    }
+
+    PlaygroundMenuEmpty {
+        color: #94a3b8;
+        background: #0f172a;
+    }
+    PlaygroundMenuEmptyDark {
+        color: #94a3b8;
+        background: #0f172a;
+    }
+
+    PlaygroundMenuContainer {
+        background: #0f172a;
+    }
+    PlaygroundMenuContainerDark {
+        background: #0f172a;
+    }
 }
 
 PlaygroundEmbeddedForm {
@@ -331,6 +378,14 @@ Tab {
     font-family: "native:MainLight";
     font-size: 3mm;
     text-align: center;
+}
+
+PlaygroundEditorTabs {
+    background: #e5e7eb;
+}
+
+PlaygroundEditorTabsDark {
+    background: #111827;
 }
 
 TabDark {
