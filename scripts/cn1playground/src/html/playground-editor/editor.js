@@ -1,6 +1,7 @@
 (function() {
   var state = {
     metadata: null,
+    language: "java",
     monacoReady: false,
     bootstrapped: false,
     editor: null,
@@ -14,8 +15,18 @@
     decorations: [],
     zoneId: null,
     changeTimer: 0,
-    lintTimer: 0
+    lintTimer: 0,
+    uiids: []
   };
+  var SUPPORTED_STATES = ["pressed", "selected", "unselected", "disabled"];
+  var SUPPORTED_PROPERTIES = [
+    "color", "background-color", "font-family", "font-size", "font-style", "text-decoration",
+    "margin", "padding", "border",
+    "transparency", "opacity", "alignment",
+    "cn1-derive", "cn1-background-type", "cn1-bg-color", "cn1-bg-image", "cn1-bg-image-scaled",
+    "cn1-border-type", "cn1-border-color", "cn1-border-radius", "cn1-border-width",
+    "cn1-box-shadow-h", "cn1-box-shadow-v", "cn1-box-shadow-spread", "cn1-box-shadow-blur", "cn1-box-shadow-color"
+  ];
 
   function post(payload) {
     var message = JSON.stringify(payload);
@@ -57,7 +68,7 @@
   }
 
   function createEditor() {
-    state.model = monaco.editor.createModel("", "java");
+    state.model = monaco.editor.createModel("", state.language || "java");
     state.editor = monaco.editor.create(document.getElementById("editor"), {
       model: state.model,
       automaticLayout: true,
@@ -75,7 +86,7 @@
       tabSize: 4,
       insertSpaces: true
     });
-    registerCompletionProvider();
+    registerCompletionProviders();
     state.editor.onDidChangeModelContent(function() {
       if (state.suppressChange) {
         return;
@@ -86,7 +97,7 @@
     });
   }
 
-  function registerCompletionProvider() {
+  function registerCompletionProviders() {
     monaco.languages.registerCompletionItemProvider("java", {
       triggerCharacters: [".", "(", ",", " "],
       provideCompletionItems: function(model, position) {
@@ -98,6 +109,139 @@
         return { suggestions: collectSuggestions(model, position, text, offset) };
       }
     });
+    monaco.languages.registerCompletionItemProvider("css", {
+      triggerCharacters: [".", "-", " "],
+      provideCompletionItems: function(model, position) {
+        return { suggestions: cssSuggestions(model, position) };
+      }
+    });
+  }
+
+  function cssSuggestions(model, position) {
+    var text = model.getValue();
+    var offset = model.getOffsetAt(position);
+    if (isInsideCssRuleBlock(text, offset)) {
+      return cssPropertySuggestions(model, position);
+    }
+    var stateContext = findCssStateContext(text, offset);
+    if (stateContext) {
+      return cssStateSuggestions(model, position, stateContext.prefix);
+    }
+    return cssSelectorSuggestions(model, position);
+  }
+
+  function cssSelectorSuggestions(model, position) {
+    var word = model.getWordUntilPosition(position);
+    var prefix = (word && word.word ? word.word : "");
+    var range = new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
+    var suggestions = [];
+    (state.uiids || []).forEach(function(uiid) {
+      if (!uiid) {
+        return;
+      }
+      var selector = uiid;
+      if (!matchesPrefix(selector, prefix)) {
+        return;
+      }
+      suggestions.push({
+        label: selector,
+        kind: monaco.languages.CompletionItemKind.Class,
+        insertText: selector,
+        detail: "UIID selector",
+        range: range
+      });
+      suggestions.push({
+        label: selector + " { ... }",
+        kind: monaco.languages.CompletionItemKind.Snippet,
+        insertText: selector + " {\n\t$0\n}",
+        insertTextRules: monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
+        detail: "UIID rule",
+        range: range
+      });
+    });
+    return suggestions;
+  }
+
+  function cssStateSuggestions(model, position, prefix) {
+    var range = new monaco.Range(position.lineNumber, position.column - prefix.length, position.lineNumber, position.column);
+    var suggestions = [];
+    SUPPORTED_STATES.forEach(function(stateName) {
+      if (!matchesPrefix(stateName, prefix)) {
+        return;
+      }
+      suggestions.push({
+        label: "." + stateName,
+        kind: monaco.languages.CompletionItemKind.EnumMember,
+        insertText: stateName,
+        detail: "Component state",
+        range: range
+      });
+    });
+    return suggestions;
+  }
+
+  function cssPropertySuggestions(model, position) {
+    var word = model.getWordUntilPosition(position);
+    var prefix = (word && word.word ? word.word : "");
+    var range = new monaco.Range(position.lineNumber, word.startColumn, position.lineNumber, word.endColumn);
+    var suggestions = [];
+    SUPPORTED_PROPERTIES.forEach(function(propertyName) {
+      if (!matchesPrefix(propertyName, prefix)) {
+        return;
+      }
+      suggestions.push({
+        label: propertyName,
+        kind: monaco.languages.CompletionItemKind.Property,
+        insertText: propertyName + ": ",
+        detail: "Supported CN1 property",
+        range: range
+      });
+    });
+    return suggestions;
+  }
+
+  function isInsideCssRuleBlock(text, offset) {
+    var depth = 0;
+    for (var i = 0; i < offset && i < text.length; i++) {
+      var ch = text.charAt(i);
+      if (ch === "{") {
+        depth++;
+      } else if (ch === "}" && depth > 0) {
+        depth--;
+      }
+    }
+    return depth > 0;
+  }
+
+  function findCssStateContext(text, offset) {
+    var i = offset - 1;
+    while (i >= 0 && /\s/.test(text.charAt(i))) {
+      i--;
+    }
+    var end = i + 1;
+    while (i >= 0 && /[A-Za-z0-9_-]/.test(text.charAt(i))) {
+      i--;
+    }
+    var prefix = text.substring(i + 1, end);
+    while (i >= 0 && /\s/.test(text.charAt(i))) {
+      i--;
+    }
+    if (i < 0 || text.charAt(i) !== ".") {
+      return null;
+    }
+    i--;
+    while (i >= 0 && /\s/.test(text.charAt(i))) {
+      i--;
+    }
+    var selectorEnd = i + 1;
+    while (i >= 0 && /[A-Za-z0-9_-]/.test(text.charAt(i))) {
+      i--;
+    }
+    var selector = text.substring(i + 1, selectorEnd);
+    if (!selector || selector.length === 0) {
+      return null;
+    }
+    return { selector: selector, prefix: prefix };
   }
 
   function collectSuggestions(model, position, text, offset) {
@@ -570,10 +714,15 @@
     });
   }
 
-  function bootstrap(metadataJson, source, darkMode, markers, messages) {
+  function bootstrap(metadataJson, source, language, darkMode, markers, messages, uiids) {
     ensureMonaco(function() {
       state.metadata = normalizeMetadata(JSON.parse(metadataJson));
+      state.language = language || "java";
+      state.uiids = uiids || [];
       state.bootstrapped = true;
+      if (state.model && state.model.getLanguageId && state.model.getLanguageId() !== state.language) {
+        monaco.editor.setModelLanguage(state.model, state.language);
+      }
       setSource(source || "");
       setMarkers(markers || []);
       setInlineMessages(messages || []);
@@ -612,6 +761,10 @@
     state.model.setValue(source);
     state.suppressChange = false;
     scheduleLocalLint();
+  }
+
+  function setUiids(uiids) {
+    state.uiids = uiids || [];
   }
 
   function setMarkers(markers) {
@@ -658,6 +811,7 @@
     setSource: setSource,
     setMarkers: setMarkers,
     setInlineMessages: setInlineMessages,
-    applyTheme: applyTheme
+    applyTheme: applyTheme,
+    setUiids: setUiids
   };
 })();
