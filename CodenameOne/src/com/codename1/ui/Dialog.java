@@ -1177,18 +1177,21 @@ public class Dialog extends Form implements AbstractDialog {
     /// #### Parameters
     ///
     /// - `time`: a milliseconds time used to dispose the dialog
+    @Override
     public void setTimeout(long time) {
         this.time = System.currentTimeMillis() + time;
         super.registerAnimatedInternal(this);
     }
 
     /// {@inheritDoc}
+    @Override
     public void setTransitions(Transition transition) {
         setTransitionInAnimator(transition);
         setTransitionOutAnimator(transition);
     }
 
     /// {@inheritDoc}
+    @Override
     public void configureCommands(Command[] cmds, boolean commandsAsButtons) {
         if (cmds == null) {
             return;
@@ -1821,6 +1824,7 @@ public class Dialog extends Form implements AbstractDialog {
     /// #### Returns
     ///
     /// last command pressed in the modal dialog
+    @Override
     public Command showDialog() {
         lastCommandPressed = null;
         show();
@@ -1941,6 +1945,7 @@ public class Dialog extends Form implements AbstractDialog {
     ///
     /// - `dialogType`: @param dialogType can be one of TYPE_WARNING, TYPE_INFO,
     /// TYPE_ERROR, TYPE_CONFIRMATION or TYPE_ALARM
+    @Override
     public void setDialogType(int dialogType) {
         this.dialogType = dialogType;
     }

@@ -71,6 +71,7 @@ public class InteractionDialog extends Container implements AbstractDialog {
     private static final Runnable BLOCKING_SLEEP = new BlockingSleepRunnable();
 
     private static class BlockingSleepRunnable implements Runnable {
+        @Override
         public void run() {
             com.codename1.io.Util.sleep(10);
         }
@@ -414,6 +415,7 @@ public class InteractionDialog extends Container implements AbstractDialog {
     }
 
     /// Removes the interaction dialog from view
+    @Override
     public void dispose() {
         disposed = true;
         Container p = getParent();
@@ -932,15 +934,18 @@ public class InteractionDialog extends Container implements AbstractDialog {
     }
 
     /// {@inheritDoc}
+    @Override
     public void setDialogType(int dialogType) {
         // no-op for InteractionDialog. Dialog sounds are specific to Dialog/Form internals.
     }
 
     /// {@inheritDoc}
+    @Override
     public void setTransitions(Transition transition) {
     }
 
     /// {@inheritDoc}
+    @Override
     public void configureCommands(Command[] cmds, boolean commandsAsButtons) {
         if (cmds == null || cmds.length == 0) {
             return;
@@ -953,13 +958,13 @@ public class InteractionDialog extends Container implements AbstractDialog {
         }
         buttonArea.setUIID("DialogCommandArea");
         String uiid = UIManager.getInstance().getThemeConstant("dlgButtonCommandUIID", null);
-        for (int iter = 0; iter < cmds.length; iter++) {
-            final Command command = cmds[iter];
+        for (final Command command : cmds) {
             Button b = new Button(command);
             if (uiid != null) {
                 b.setUIID(uiid);
             }
             b.addActionListener(new ActionListener<ActionEvent>() {
+                @Override
                 public void actionPerformed(ActionEvent evt) {
                     lastCommandPressed = command;
                     dispose();
@@ -971,15 +976,18 @@ public class InteractionDialog extends Container implements AbstractDialog {
     }
 
     /// {@inheritDoc}
+    @Override
     public void setDefaultCommand(Command defaultCommand) {
     }
 
     /// {@inheritDoc}
+    @Override
     public void setTimeout(long timeout) {
         if (timeout <= 0) {
             return;
         }
         UITimer.timer((int) timeout, false, Display.getInstance().getCurrent(), new Runnable() {
+            @Override
             public void run() {
                 dispose();
             }
@@ -987,6 +995,7 @@ public class InteractionDialog extends Container implements AbstractDialog {
     }
 
     /// Shows this interaction dialog and blocks until it is disposed.
+    @Override
     public Command showDialog() {
         int width = Display.getInstance().getDisplayWidth();
         int height = Display.getInstance().getDisplayHeight();
