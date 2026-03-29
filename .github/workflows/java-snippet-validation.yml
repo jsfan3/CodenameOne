@@ -10,12 +10,6 @@ on:
       - 'scripts/java-snippet-to-playground-uri.sh'
       - 'scripts/validate-extracted-javadoc-snippets.sh'
       - '.github/workflows/java-snippet-validation.yml'
-  push:
-    paths:
-      - 'scripts/extract-javadoc-java-snippets.sh'
-      - 'scripts/java-snippet-to-playground-uri.sh'
-      - 'scripts/validate-extracted-javadoc-snippets.sh'
-      - '.github/workflows/java-snippet-validation.yml'
 
 jobs:
   validate-snippets:
