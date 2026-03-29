@@ -99,6 +99,20 @@ class BytecodeComplianceMojoTest {
         assertTrue(violations.isEmpty(), "Expected no violations when owner inherits allowed member through superclass in allowed index");
     }
 
+
+    @Test
+    void rewritesClassMajorVersionAboveJava17(@TempDir Path tempDir) throws Exception {
+        Path outputDir = tempDir.resolve("classes");
+        Files.createDirectories(outputDir);
+        Path classFile = writeClassWithVersion(outputDir, "app/TooNew", Opcodes.V18);
+
+        BytecodeComplianceMojo mojo = new BytecodeComplianceMojo();
+        int rewritten = enforceMaxClassVersion(mojo, outputDir.toFile(), Opcodes.V17);
+
+        assertEquals(1, rewritten, "Expected one class to be rewritten");
+        assertEquals(Opcodes.V17, readMajorVersion(classFile), "Expected rewritten class major version to be Java 17 (61)");
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, ?> buildClassIndex(BytecodeComplianceMojo mojo, List<java.io.File> roots) throws Exception {
         Method method = BytecodeComplianceMojo.class.getDeclaredMethod("buildClassIndex", List.class);
@@ -117,6 +131,37 @@ class BytecodeComplianceMojoTest {
         Field field = target.getClass().getDeclaredField(name);
         field.setAccessible(true);
         return field.get(target);
+    }
+
+
+    private int enforceMaxClassVersion(BytecodeComplianceMojo mojo, java.io.File outputDir, int maxVersion) throws Exception {
+        Method method = BytecodeComplianceMojo.class.getDeclaredMethod("enforceMaxClassVersion", java.io.File.class, int.class);
+        method.setAccessible(true);
+        return ((Integer) method.invoke(mojo, outputDir, maxVersion)).intValue();
+    }
+
+    private int readMajorVersion(Path classFile) throws Exception {
+        byte[] bytes = Files.readAllBytes(classFile);
+        return ((bytes[6] & 0xFF) << 8) | (bytes[7] & 0xFF);
+    }
+
+    private Path writeClassWithVersion(Path root, String className, int version) throws Exception {
+        ClassWriter writer = new ClassWriter(0);
+        writer.visit(version, Opcodes.ACC_PUBLIC, className, null, "java/lang/Object", null);
+
+        MethodVisitor init = writer.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
+        init.visitCode();
+        init.visitVarInsn(Opcodes.ALOAD, 0);
+        init.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+        init.visitInsn(Opcodes.RETURN);
+        init.visitMaxs(1, 1);
+        init.visitEnd();
+
+        writer.visitEnd();
+        Path classFile = root.resolve(className + ".class");
+        Files.createDirectories(classFile.getParent());
+        Files.write(classFile, writer.toByteArray());
+        return classFile;
     }
 
     private void writeClass(Path root, String className, String owner, String methodName, String descriptor) throws Exception {

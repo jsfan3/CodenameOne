@@ -51,6 +51,8 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
         SUGGESTED_REPLACEMENTS = Collections.unmodifiableMap(m);
     }
 
+    private static final int MAX_CLASS_MAJOR_VERSION = Opcodes.V17;
+
     private File complianceOutputFile;
 
     @Override
@@ -72,9 +74,11 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
 
         File outputDir = new File(project.getBuild().getOutputDirectory());
         if (!outputDir.isDirectory()) {
-            writeComplianceSuccess("No output classes found for compliance check in " + outputDir.getAbsolutePath());
+            writeComplianceSuccess("No output classes found for compliance check in " + outputDir.getAbsolutePath(), 0);
             return;
         }
+
+        int rewrittenClassCount = enforceMaxClassVersion(outputDir, MAX_CLASS_MAJOR_VERSION);
 
         List<File> dependencyJars = getDependencyJarsForScanning();
         Map<String, ClassMetadata> allowedIndex = buildClassIndex(Arrays.asList(getJavaRuntimeJar(), getCodenameOneJar()));
@@ -82,11 +86,11 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
 
         List<Violation> violations = scanProjectClasses(outputDir, allowedIndex, projectAndDependencyIndex);
         if (!violations.isEmpty()) {
-            writeComplianceReport(violations, outputDir, dependencyJars);
+            writeComplianceReport(violations, outputDir, dependencyJars, rewrittenClassCount);
             throw new MojoExecutionException(buildFailureSummary(violations));
         }
 
-        writeComplianceSuccess("Completed compliance check on " + project.getName());
+        writeComplianceSuccess("Completed compliance check on " + project.getName(), rewrittenClassCount);
     }
 
     private boolean shouldSkipComplianceCheck() {
@@ -114,21 +118,25 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
         }
     }
 
-    private void writeComplianceSuccess(String message) throws MojoExecutionException {
+    private void writeComplianceSuccess(String message, int rewrittenClassCount) throws MojoExecutionException {
         complianceOutputFile.getParentFile().mkdirs();
         try {
-            FileUtils.writeStringToFile(complianceOutputFile, message, "UTF-8");
+            StringBuilder content = new StringBuilder();
+            content.append(message).append("\n");
+            content.append("Rewritten class files to Java 17 major version: ").append(rewrittenClassCount).append("\n");
+            FileUtils.writeStringToFile(complianceOutputFile, content.toString(), "UTF-8");
         } catch (IOException ex) {
             throw new MojoExecutionException("Failed to write compliance file", ex);
         }
     }
 
-    private void writeComplianceReport(List<Violation> violations, File outputDir, List<File> dependencyJars) throws MojoExecutionException {
+    private void writeComplianceReport(List<Violation> violations, File outputDir, List<File> dependencyJars, int rewrittenClassCount) throws MojoExecutionException {
         StringBuilder report = new StringBuilder();
         report.append("Codename One compliance check failed.\n");
         report.append("Project: ").append(project.getName()).append("\n");
         report.append("Output classes: ").append(outputDir.getAbsolutePath()).append("\n");
-        report.append("Dependency jars scanned: ").append(dependencyJars.size()).append("\n\n");
+        report.append("Dependency jars scanned: ").append(dependencyJars.size()).append("\n");
+        report.append("Rewritten class files to Java 17 major version: ").append(rewrittenClassCount).append("\n\n");
         report.append("Violations (").append(violations.size()).append(")\n");
         report.append("========================================\n");
         int i = 1;
@@ -161,6 +169,58 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
             sb.append(v.sourceClass).append("#").append(v.sourceMethod).append(" -> ").append(v.referencedMember);
         }
         return sb.toString();
+    }
+
+
+    private int enforceMaxClassVersion(File outputDir, final int maxVersion) throws MojoExecutionException {
+        List<File> classFiles = new ArrayList<File>();
+        collectClassFiles(outputDir, classFiles);
+        int rewritten = 0;
+        for (File classFile : classFiles) {
+            try {
+                byte[] originalBytes = FileUtils.readFileToByteArray(classFile);
+                ClassVersionInfo versionInfo = readClassVersion(originalBytes);
+                if (versionInfo.majorVersion > maxVersion) {
+                    byte[] rewrittenBytes = rewriteClassVersion(originalBytes, maxVersion);
+                    FileUtils.writeByteArrayToFile(classFile, rewrittenBytes);
+                    rewritten++;
+                    getLog().info("Rewrote class major version " + versionInfo.majorVersion + " -> " + maxVersion + " for " + classFile.getAbsolutePath());
+                }
+            } catch (IOException ex) {
+                throw new MojoExecutionException("Failed to enforce class version for " + classFile, ex);
+            }
+        }
+        if (rewritten > 0) {
+            getLog().info("Rewrote " + rewritten + " class file(s) to Java 17 major version " + maxVersion);
+        }
+        return rewritten;
+    }
+
+    private ClassVersionInfo readClassVersion(byte[] classBytes) {
+        final ClassVersionInfo out = new ClassVersionInfo();
+        ClassReader reader = new ClassReader(classBytes);
+        reader.accept(new ClassVisitor(Opcodes.ASM9) {
+            @Override
+            public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                out.majorVersion = version;
+                out.className = name;
+            }
+        }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+        return out;
+    }
+
+    private byte[] rewriteClassVersion(byte[] classBytes, final int maxVersion) {
+        ClassReader reader = new ClassReader(classBytes);
+        ClassWriter writer = new ClassWriter(reader, 0);
+        ClassVisitor visitor = new ClassVisitor(Opcodes.ASM9, writer) {
+            @Override
+            public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+                int effectiveVersion = version > maxVersion ? maxVersion : version;
+                super.visit(effectiveVersion, access, name, signature, superName, interfaces);
+            }
+        };
+        reader.accept(visitor, 0);
+        return writer.toByteArray();
     }
 
     private List<Violation> scanProjectClasses(File outputDir, final Map<String, ClassMetadata> allowedIndex, final Map<String, ClassMetadata> projectAndDependencyIndex) throws MojoExecutionException {
@@ -343,6 +403,11 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
 
     private static String memberKey(String name, String descriptor) {
         return name + descriptor;
+    }
+
+    private static final class ClassVersionInfo {
+        int majorVersion;
+        String className;
     }
 
     private static final class ClassMetadata {
