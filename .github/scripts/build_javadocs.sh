@@ -35,7 +35,7 @@ public class ImplementationFactory {
 }
 EOF
 
-find "$CN1_DIR/build/tempJavaSources" "$ROOT_DIR/Ports/CLDC11/src" -name "*.java" -not -path "$ROOT_DIR/Ports/CLDC11/src/java/*" \
+find "$CN1_DIR/build/tempJavaSources" "$ROOT_DIR/Ports/CLDC11/src" -name "*.java" \
   | /usr/bin/xargs "$JAVADOC_CMD" \
     --allow-script-in-comments \
     --add-stylesheet "$ROOT_DIR/maven/javadoc-resources/highlight.css" \
