@@ -2955,7 +2955,7 @@ public final class Util {
     /// handling, there must be an automatic
     ///
     /// ```java
-    /// .retry()
+    /// request.retry();
     /// ```
     /// , as in the code example below.
     ///
