@@ -70,42 +70,22 @@ import com.codename1.ui.util.EventDispatcher;
 /// ```
 ///
 /// The `Tabs` allows swiping on the X-axis (by default) but also on the Y-axis ([demo video](https://youtu.be/9CxqFGOYAU0)):
-/// ```text
+/// ```java
 /// Form hi = new Form("Test swipe on tabs", BorderLayout.absolute());
 /// Tabs tabs = new Tabs();
+/// tabs.addTab("First", new Label("First tab"));
+/// tabs.addTab("Second", new Label("Second tab"));
+///
 /// ButtonGroup btnGroup = new ButtonGroup();
-/// Button swipeXBtn = RadioButton.createToggle("Swipe on X-Axis", btnGroup);
-/// Button swipeYBtn = RadioButton.createToggle("Swipe on Y-Axis", btnGroup);
-/// btnGroup.setSelected(0);
+/// RadioButton swipeXBtn = RadioButton.createToggle("Swipe on X-Axis", btnGroup);
+/// RadioButton swipeYBtn = RadioButton.createToggle("Swipe on Y-Axis", btnGroup);
+/// btnGroup.setSelected(swipeXBtn);
 ///
-/// swipeXBtn.addActionListener(l -> {
-///     tabs.setSwipeOnXAxis(true);
-/// });
-///
-/// swipeYBtn.addActionListener(l -> {
-///     tabs.setSwipeOnXAxis(false);
-/// });
+/// swipeXBtn.addActionListener(l -> tabs.setSwipeOnXAxis(true));
+/// swipeYBtn.addActionListener(l -> tabs.setSwipeOnXAxis(false));
 ///
 /// hi.add(BorderLayout.NORTH, GridLayout.encloseIn(2, swipeXBtn, swipeYBtn));
-///
-/// //tabs.hideTabs();
 /// hi.add(BorderLayout.CENTER, tabs);
-///
-/// List cards = new ArrayList<>();
-/// for (int i=0; i {
-///     switch(i2) {
-///         case 0:
-///             if(!firstTab.isSelected()) {
-///                 firstTab.setSelected(true);
-///             }
-///             break;
-///         case 1:
-///             if(!secondTab.isSelected()) {
-///                 secondTab.setSelected(true);
-///             }
-///             break;
-///      }
-/// });
 /// ```
 ///
 /// @author Chen Fishbein

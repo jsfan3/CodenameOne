@@ -51,7 +51,7 @@ import java.util.Arrays;
 /// intersection 'down') Point C in the image is inside (two intersections in the
 /// 'down' direction)
 ///
-/// ```text
+/// ```java
 /// Form hi = new Form("Shape");
 ///
 /// // We create a 50 x 100 shape, this is arbitrary since we can scale it easily
@@ -65,14 +65,16 @@ import java.util.Arrays;
 /// path.lineTo(5, 25);
 /// path.lineTo(20,0);
 ///
-/// hi.getContentPane().getUnselectedStyle().setBgPainter((Graphics g, Rectangle rect) -> {
-///     g.setColor(0xff);
-///     float widthRatio = ((float)rect.getWidth()) / 50f;
-///     float heightRatio = ((float)rect.getHeight()) / 100f;
-///     g.scale(widthRatio, heightRatio);
-///     g.translate((int)(((float)rect.getX()) / widthRatio), (int)(((float)rect.getY()) / heightRatio));
-///     g.fillShape(path);
-///     g.resetAffine();
+/// hi.getContentPane().getUnselectedStyle().setBgPainter(new Painter() {
+///     public void paint(Graphics g, Rectangle rect) {
+///         g.setColor(0xff);
+///         float widthRatio = ((float) rect.getWidth()) / 50f;
+///         float heightRatio = ((float) rect.getHeight()) / 100f;
+///         g.scale(widthRatio, heightRatio);
+///         g.translate((int) (((float) rect.getX()) / widthRatio), (int) (((float) rect.getY()) / heightRatio));
+///         g.fillShape(path);
+///         g.resetAffine();
+///     }
 /// });
 ///
 /// hi.show();
