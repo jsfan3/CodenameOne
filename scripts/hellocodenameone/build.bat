@@ -70,6 +70,11 @@ goto :EOF
 !MVNW! -Pexecutable-jar package -Dcodename1.platform^=javase -DskipTests -U -e
 
 goto :EOF
+
+:compliance
+!MVNW! -pl common -am process-classes -DskipTests -U -e
+
+goto :EOF
 :help
 echo build.sh [COMMAND]
 echo Local Build Commands:
@@ -85,6 +90,8 @@ echo     *Requires either GRADLE_HOME environment variable^, or for gradle to be
 echo   ios_source
 echo     Generates an Xcode Project that you can open and build using Apple^'s development tools
 echo     *Requires a Mac with Xcode installed
+echo   compliance
+echo     Runs the common module process-classes phase ^(including cn1 compliance-check^)
 echo 
 echo Build Server Commands:
 echo   The following commands will build the app using the Codename One build server^, and require

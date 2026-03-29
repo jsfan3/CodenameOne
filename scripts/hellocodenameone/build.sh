@@ -66,6 +66,10 @@ function jar {
   
   "$MVNW" "-Pexecutable-jar" "package" "-Dcodename1.platform=javase" "-DskipTests" "-U" "-e"
 }
+function compliance {
+  
+  "$MVNW" "-pl" "common" "-am" "process-classes" "-DskipTests" "-U" "-e"
+}
 function help {
   "echo" "-e" "build.sh [COMMAND]"
   "echo" "-e" "Local Build Commands:"
@@ -81,6 +85,8 @@ function help {
   "echo" "-e" "  ios_source"
   "echo" "-e" "    Generates an Xcode Project that you can open and build using Apple's development tools"
   "echo" "-e" "    *Requires a Mac with Xcode installed"
+  "echo" "-e" "  compliance"
+  "echo" "-e" "    Runs the common module process-classes phase (including cn1 compliance-check)"
   "echo" "-e" ""
   "echo" "-e" "Build Server Commands:"
   "echo" "-e" "  The following commands will build the app using the Codename One build server, and require"
