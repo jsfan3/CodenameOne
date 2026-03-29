@@ -2,6 +2,8 @@ package com.codename1.maven;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -113,6 +115,20 @@ class BytecodeComplianceMojoTest {
         assertEquals(Opcodes.V17, readMajorVersion(classFile), "Expected rewritten class major version to be Java 17 (61)");
     }
 
+    @Test
+    void rewritesStringSplitAndFormatInvocations(@TempDir Path tempDir) throws Exception {
+        Path outputDir = tempDir.resolve("classes");
+        Files.createDirectories(outputDir);
+        Path classFile = writeStringApiUsageClass(outputDir, "app/StringApiUser");
+
+        BytecodeComplianceMojo mojo = new BytecodeComplianceMojo();
+        applyInvocationRewrites(mojo, outputDir.toFile());
+
+        byte[] rewritten = Files.readAllBytes(classFile);
+        assertTrue(containsMethodInsn(rewritten, "com/codename1/impl/JdkApiRewriteHelper", "split", "(Ljava/lang/String;Ljava/lang/String;)[Ljava/lang/String;", Opcodes.INVOKESTATIC));
+        assertTrue(containsMethodInsn(rewritten, "com/codename1/impl/JdkApiRewriteHelper", "format", "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;", Opcodes.INVOKESTATIC));
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, ?> buildClassIndex(BytecodeComplianceMojo mojo, List<java.io.File> roots) throws Exception {
         Method method = BytecodeComplianceMojo.class.getDeclaredMethod("buildClassIndex", List.class);
@@ -140,6 +156,12 @@ class BytecodeComplianceMojoTest {
         return ((Integer) method.invoke(mojo, outputDir, maxVersion)).intValue();
     }
 
+    private void applyInvocationRewrites(BytecodeComplianceMojo mojo, java.io.File outputDir) throws Exception {
+        Method method = BytecodeComplianceMojo.class.getDeclaredMethod("applyInvocationRewrites", java.io.File.class);
+        method.setAccessible(true);
+        method.invoke(mojo, outputDir);
+    }
+
     private int readMajorVersion(Path classFile) throws Exception {
         byte[] bytes = Files.readAllBytes(classFile);
         return ((bytes[6] & 0xFF) << 8) | (bytes[7] & 0xFF);
@@ -162,6 +184,63 @@ class BytecodeComplianceMojoTest {
         Files.createDirectories(classFile.getParent());
         Files.write(classFile, writer.toByteArray());
         return classFile;
+    }
+
+    private Path writeStringApiUsageClass(Path root, String className) throws Exception {
+        ClassWriter writer = new ClassWriter(0);
+        writer.visit(Opcodes.V1_8, Opcodes.ACC_PUBLIC, className, null, "java/lang/Object", null);
+
+        MethodVisitor init = writer.visitMethod(Opcodes.ACC_PUBLIC, "<init>", "()V", null, null);
+        init.visitCode();
+        init.visitVarInsn(Opcodes.ALOAD, 0);
+        init.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
+        init.visitInsn(Opcodes.RETURN);
+        init.visitMaxs(1, 1);
+        init.visitEnd();
+
+        MethodVisitor run = writer.visitMethod(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, "run", "()V", null, null);
+        run.visitCode();
+        run.visitLdcInsn("a,b");
+        run.visitLdcInsn(",");
+        run.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/String", "split", "(Ljava/lang/String;)[Ljava/lang/String;", false);
+        run.visitInsn(Opcodes.POP);
+        run.visitLdcInsn("Hi %s");
+        run.visitInsn(Opcodes.ICONST_1);
+        run.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+        run.visitInsn(Opcodes.DUP);
+        run.visitInsn(Opcodes.ICONST_0);
+        run.visitLdcInsn("CN1");
+        run.visitInsn(Opcodes.AASTORE);
+        run.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/String", "format", "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;", false);
+        run.visitInsn(Opcodes.POP);
+        run.visitInsn(Opcodes.RETURN);
+        run.visitMaxs(5, 0);
+        run.visitEnd();
+
+        writer.visitEnd();
+        Path classFile = root.resolve(className + ".class");
+        Files.createDirectories(classFile.getParent());
+        Files.write(classFile, writer.toByteArray());
+        return classFile;
+    }
+
+    private boolean containsMethodInsn(byte[] classBytes, final String owner, final String name, final String descriptor, final int opcode) {
+        final boolean[] found = new boolean[]{false};
+        ClassReader reader = new ClassReader(classBytes);
+        reader.accept(new ClassVisitor(Opcodes.ASM9) {
+            @Override
+            public MethodVisitor visitMethod(int access, String methodName, String methodDescriptor, String signature, String[] exceptions) {
+                return new MethodVisitor(Opcodes.ASM9) {
+                    @Override
+                    public void visitMethodInsn(int seenOpcode, String seenOwner, String seenName, String seenDescriptor, boolean isInterface) {
+                        if (seenOpcode == opcode && owner.equals(seenOwner) && name.equals(seenName) && descriptor.equals(seenDescriptor)) {
+                            found[0] = true;
+                        }
+                    }
+                };
+            }
+        }, 0);
+        return found[0];
     }
 
     private void writeClass(Path root, String className, String owner, String methodName, String descriptor) throws Exception {

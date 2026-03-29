@@ -13,12 +13,15 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +30,7 @@ import java.util.Deque;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,8 +57,32 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
     }
 
     private static final int MAX_CLASS_MAJOR_VERSION = Opcodes.V17;
+    private static final String JDK_API_REWRITE_HELPER_INTERNAL_NAME = "com/codename1/impl/JdkApiRewriteHelper";
+    private static final Map<MethodRef, MethodRef> INVOCATION_REWRITE_RULES = createInvocationRewriteRules();
 
     private File complianceOutputFile;
+    private InvocationRewriteSummary lastInvocationRewriteSummary = new InvocationRewriteSummary();
+
+    private static Map<MethodRef, MethodRef> createInvocationRewriteRules() {
+        Map<MethodRef, MethodRef> rules = new LinkedHashMap<MethodRef, MethodRef>();
+        rules.put(
+                MethodRef.virtual("java/lang/String", "split", "(Ljava/lang/String;)[Ljava/lang/String;"),
+                MethodRef.staticRef(JDK_API_REWRITE_HELPER_INTERNAL_NAME, "split", "(Ljava/lang/String;Ljava/lang/String;)[Ljava/lang/String;")
+        );
+        rules.put(
+                MethodRef.virtual("java/lang/String", "split", "(Ljava/lang/String;I)[Ljava/lang/String;"),
+                MethodRef.staticRef(JDK_API_REWRITE_HELPER_INTERNAL_NAME, "split", "(Ljava/lang/String;Ljava/lang/String;I)[Ljava/lang/String;")
+        );
+        rules.put(
+                MethodRef.staticRef("java/lang/String", "format", "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;"),
+                MethodRef.staticRef(JDK_API_REWRITE_HELPER_INTERNAL_NAME, "format", "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;")
+        );
+        rules.put(
+                MethodRef.staticRef("java/lang/String", "format", "(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;"),
+                MethodRef.staticRef(JDK_API_REWRITE_HELPER_INTERNAL_NAME, "format", "(Ljava/util/Locale;Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;")
+        );
+        return Collections.unmodifiableMap(rules);
+    }
 
     @Override
     protected void executeImpl() throws MojoExecutionException, MojoFailureException {
@@ -80,6 +108,8 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
         }
 
         int rewrittenClassCount = enforceMaxClassVersion(outputDir, MAX_CLASS_MAJOR_VERSION);
+        InvocationRewriteSummary invocationRewriteSummary = applyInvocationRewrites(outputDir);
+        lastInvocationRewriteSummary = invocationRewriteSummary;
 
         List<File> dependencyJars = getDependencyJarsForScanning();
         Map<String, ClassMetadata> allowedIndex = buildClassIndex(Arrays.asList(getJavaRuntimeJar(), getCodenameOneJar()));
@@ -92,6 +122,7 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
         }
 
         writeComplianceSuccess("Completed compliance check on " + project.getName(), rewrittenClassCount);
+        getLog().info("Invocation rewrite summary: classes rewritten=" + invocationRewriteSummary.rewrittenClasses + ", callsites rewritten=" + invocationRewriteSummary.rewrittenCallsites);
     }
 
     private boolean shouldSkipComplianceCheck() {
@@ -125,6 +156,8 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
             StringBuilder content = new StringBuilder();
             content.append(message).append("\n");
             content.append("Rewritten class files to Java 17 major version: ").append(rewrittenClassCount).append("\n");
+            content.append("Rewritten JDK API callsites: ").append(lastInvocationRewriteSummary.rewrittenCallsites)
+                    .append(" across ").append(lastInvocationRewriteSummary.rewrittenClasses).append(" class(es)").append("\n");
             FileUtils.writeStringToFile(complianceOutputFile, content.toString(), "UTF-8");
         } catch (IOException ex) {
             throw new MojoExecutionException("Failed to write compliance file", ex);
@@ -138,6 +171,8 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
         report.append("Output classes: ").append(outputDir.getAbsolutePath()).append("\n");
         report.append("Dependency jars scanned: ").append(dependencyJars.size()).append("\n");
         report.append("Rewritten class files to Java 17 major version: ").append(rewrittenClassCount).append("\n\n");
+        report.append("Rewritten JDK API callsites: ").append(lastInvocationRewriteSummary.rewrittenCallsites)
+                .append(" across ").append(lastInvocationRewriteSummary.rewrittenClasses).append(" class(es)").append("\n\n");
         report.append("Violations (").append(violations.size()).append(")\n");
         report.append("========================================\n");
         int i = 1;
@@ -222,6 +257,71 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
         };
         reader.accept(visitor, 0);
         return writer.toByteArray();
+    }
+
+    private InvocationRewriteSummary applyInvocationRewrites(File outputDir) throws MojoExecutionException {
+        InvocationRewriteSummary summary = new InvocationRewriteSummary();
+        List<File> classFiles = new ArrayList<File>();
+        collectClassFiles(outputDir, classFiles);
+        for (File classFile : classFiles) {
+            try {
+                byte[] originalBytes = FileUtils.readFileToByteArray(classFile);
+                InvocationRewriteResult rewriteResult = rewriteClassInvocations(originalBytes);
+                if (rewriteResult.rewrittenCallsites > 0) {
+                    validateClass(rewriteResult.bytes, classFile);
+                    FileUtils.writeByteArrayToFile(classFile, rewriteResult.bytes);
+                    summary.rewrittenClasses++;
+                    summary.rewrittenCallsites += rewriteResult.rewrittenCallsites;
+                    getLog().info("Applied " + rewriteResult.rewrittenCallsites + " invocation rewrite(s) in " + classFile.getAbsolutePath());
+                }
+            } catch (IOException ex) {
+                throw new MojoExecutionException("Failed to rewrite invocations for " + classFile, ex);
+            }
+        }
+        return summary;
+    }
+
+    private InvocationRewriteResult rewriteClassInvocations(byte[] classBytes) {
+        final InvocationRewriteResult result = new InvocationRewriteResult();
+        final ClassReader reader = new ClassReader(classBytes);
+        final ClassWriter writer = new ClassWriter(reader, 0);
+        ClassVisitor visitor = new ClassVisitor(Opcodes.ASM9, writer) {
+            @Override
+            public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                MethodVisitor delegate = super.visitMethod(access, name, descriptor, signature, exceptions);
+                return new MethodVisitor(Opcodes.ASM9, delegate) {
+                    @Override
+                    public void visitMethodInsn(int opcode, String owner, String methodName, String methodDescriptor, boolean isInterface) {
+                        MethodRef source = new MethodRef(opcode, owner, methodName, methodDescriptor);
+                        MethodRef target = INVOCATION_REWRITE_RULES.get(source);
+                        if (target != null) {
+                            result.rewrittenCallsites++;
+                            super.visitMethodInsn(target.opcode, target.owner, target.name, target.descriptor, false);
+                            return;
+                        }
+                        super.visitMethodInsn(opcode, owner, methodName, methodDescriptor, isInterface);
+                    }
+                };
+            }
+        };
+        reader.accept(visitor, 0);
+        result.bytes = result.rewrittenCallsites > 0 ? writer.toByteArray() : classBytes;
+        return result;
+    }
+
+    private void validateClass(byte[] classBytes, File classFile) throws MojoExecutionException {
+        try {
+            StringWriter stringWriter = new StringWriter();
+            PrintWriter printWriter = new PrintWriter(stringWriter);
+            CheckClassAdapter.verify(new ClassReader(classBytes), false, printWriter);
+            printWriter.flush();
+            String validationOutput = stringWriter.toString().trim();
+            if (!validationOutput.isEmpty()) {
+                throw new MojoExecutionException("Bytecode validation failed for " + classFile + ": " + validationOutput);
+            }
+        } catch (RuntimeException ex) {
+            throw new MojoExecutionException("Bytecode validation failed for " + classFile, ex);
+        }
     }
 
     private List<Violation> scanProjectClasses(File outputDir, final Map<String, ClassMetadata> allowedIndex, final Map<String, ClassMetadata> projectAndDependencyIndex) throws MojoExecutionException {
@@ -404,6 +504,62 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
 
     private static String memberKey(String name, String descriptor) {
         return name + descriptor;
+    }
+
+    private static final class MethodRef {
+        final int opcode;
+        final String owner;
+        final String name;
+        final String descriptor;
+
+        private MethodRef(int opcode, String owner, String name, String descriptor) {
+            this.opcode = opcode;
+            this.owner = owner;
+            this.name = name;
+            this.descriptor = descriptor;
+        }
+
+        private static MethodRef virtual(String owner, String name, String descriptor) {
+            return new MethodRef(Opcodes.INVOKEVIRTUAL, owner, name, descriptor);
+        }
+
+        private static MethodRef staticRef(String owner, String name, String descriptor) {
+            return new MethodRef(Opcodes.INVOKESTATIC, owner, name, descriptor);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (!(obj instanceof MethodRef)) {
+                return false;
+            }
+            MethodRef other = (MethodRef) obj;
+            return opcode == other.opcode
+                    && owner.equals(other.owner)
+                    && name.equals(other.name)
+                    && descriptor.equals(other.descriptor);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = opcode;
+            result = 31 * result + owner.hashCode();
+            result = 31 * result + name.hashCode();
+            result = 31 * result + descriptor.hashCode();
+            return result;
+        }
+    }
+
+    private static final class InvocationRewriteResult {
+        byte[] bytes;
+        int rewrittenCallsites;
+    }
+
+    private static final class InvocationRewriteSummary {
+        int rewrittenClasses;
+        int rewrittenCallsites;
     }
 
     private static final class ClassVersionInfo {

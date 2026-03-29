@@ -587,4 +587,20 @@ public final class String implements CharSequence, Comparable<String> {
         return false;
     }
 
+    public String[] split(String regex) {
+        return com.codename1.impl.JdkApiRewriteHelper.split(this, regex);
+    }
+
+    public String[] split(String regex, int limit) {
+        return com.codename1.impl.JdkApiRewriteHelper.split(this, regex, limit);
+    }
+
+    public static String format(String format, Object... args) {
+        return com.codename1.impl.JdkApiRewriteHelper.format(format, args);
+    }
+
+    public static String format(java.util.Locale locale, String format, Object... args) {
+        return com.codename1.impl.JdkApiRewriteHelper.format(locale, format, args);
+    }
+
 }

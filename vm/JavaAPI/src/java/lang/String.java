@@ -899,6 +899,18 @@ public final class String implements java.lang.CharSequence, Comparable<String> 
     
     
     public native static String format(String format, Object... args);
+
+    public static String format(java.util.Locale locale, String format, Object... args) {
+        return com.codename1.impl.JdkApiRewriteHelper.format(locale, format, args);
+    }
+
+    public String[] split(String regex) {
+        return com.codename1.impl.JdkApiRewriteHelper.split(this, regex);
+    }
+
+    public String[] split(String regex, int limit) {
+        return com.codename1.impl.JdkApiRewriteHelper.split(this, regex, limit);
+    }
     
     public boolean contains(CharSequence seq) {
         return seq == null ? false : indexOf(seq.toString()) != -1;
