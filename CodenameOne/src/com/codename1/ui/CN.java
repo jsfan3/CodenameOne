@@ -1041,16 +1041,18 @@ public class CN extends CN1Constants {
     /// The sample below demonstrates the use case for this property:
     ///
     /// ```java
-    /// switch(Display.getInstance().getSMSSupport()) {
-    ///     case Display.SMS_NOT_SUPPORTED:
-    ///         return;
-    ///     case Display.SMS_SEAMLESS:
-    ///         showUIDialogToEditMessageData();
-    ///         Display.getInstance().sendSMS(phone, data);
-    ///         return;
-    ///     default:
-    ///         Display.getInstance().sendSMS(phone, data);
-    ///         return;
+    /// void sendMessage(String phone, String data) {
+    ///     switch(Display.getInstance().getSMSSupport()) {
+    ///         case Display.SMS_NOT_SUPPORTED:
+    ///             return;
+    ///         case Display.SMS_SEAMLESS:
+    ///             showUIDialogToEditMessageData();
+    ///             Display.getInstance().sendSMS(phone, data);
+    ///             return;
+    ///         default:
+    ///             Display.getInstance().sendSMS(phone, data);
+    ///             return;
+    ///     }
     /// }
     /// ```
     ///
@@ -1077,16 +1079,18 @@ public class CN extends CN1Constants {
     /// of detecting platform behavior for sending SMS.
     ///
     /// ```java
-    /// switch(Display.getInstance().getSMSSupport()) {
-    ///     case Display.SMS_NOT_SUPPORTED:
-    ///         return;
-    ///     case Display.SMS_SEAMLESS:
-    ///         showUIDialogToEditMessageData();
-    ///         Display.getInstance().sendSMS(phone, data);
-    ///         return;
-    ///     default:
-    ///         Display.getInstance().sendSMS(phone, data);
-    ///         return;
+    /// void sendMessage(String phone, String data) {
+    ///     switch(Display.getInstance().getSMSSupport()) {
+    ///         case Display.SMS_NOT_SUPPORTED:
+    ///             return;
+    ///         case Display.SMS_SEAMLESS:
+    ///             showUIDialogToEditMessageData();
+    ///             Display.getInstance().sendSMS(phone, data);
+    ///             return;
+    ///         default:
+    ///             Display.getInstance().sendSMS(phone, data);
+    ///             return;
+    ///     }
     /// }
     /// ```
     ///
