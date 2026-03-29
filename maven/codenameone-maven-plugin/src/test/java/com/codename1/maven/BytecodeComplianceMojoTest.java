@@ -116,7 +116,7 @@ class BytecodeComplianceMojoTest {
     }
 
     @Test
-    void rewritesStringSplitAndFormatInvocations(@TempDir Path tempDir) throws Exception {
+    void rewritesStringSplitInvocations(@TempDir Path tempDir) throws Exception {
         Path outputDir = tempDir.resolve("classes");
         Files.createDirectories(outputDir);
         Path classFile = writeStringApiUsageClass(outputDir, "app/StringApiUser");
@@ -126,7 +126,6 @@ class BytecodeComplianceMojoTest {
 
         byte[] rewritten = Files.readAllBytes(classFile);
         assertTrue(containsMethodInsn(rewritten, "com/codename1/impl/JdkApiRewriteHelper", "split", "(Ljava/lang/String;Ljava/lang/String;)[Ljava/lang/String;", Opcodes.INVOKESTATIC));
-        assertTrue(containsMethodInsn(rewritten, "com/codename1/impl/JdkApiRewriteHelper", "format", "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;", Opcodes.INVOKESTATIC));
     }
 
     @SuppressWarnings("unchecked")
@@ -204,17 +203,8 @@ class BytecodeComplianceMojoTest {
         run.visitLdcInsn(",");
         run.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/String", "split", "(Ljava/lang/String;)[Ljava/lang/String;", false);
         run.visitInsn(Opcodes.POP);
-        run.visitLdcInsn("Hi %s");
-        run.visitInsn(Opcodes.ICONST_1);
-        run.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
-        run.visitInsn(Opcodes.DUP);
-        run.visitInsn(Opcodes.ICONST_0);
-        run.visitLdcInsn("CN1");
-        run.visitInsn(Opcodes.AASTORE);
-        run.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/String", "format", "(Ljava/lang/String;[Ljava/lang/Object;)Ljava/lang/String;", false);
-        run.visitInsn(Opcodes.POP);
         run.visitInsn(Opcodes.RETURN);
-        run.visitMaxs(5, 0);
+        run.visitMaxs(2, 0);
         run.visitEnd();
 
         writer.visitEnd();

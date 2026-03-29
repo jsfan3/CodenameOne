@@ -900,10 +900,6 @@ public final class String implements java.lang.CharSequence, Comparable<String> 
     
     public native static String format(String format, Object... args);
 
-    public static String format(java.util.Locale locale, String format, Object... args) {
-        return com.codename1.impl.JdkApiRewriteHelper.format(locale, format, args);
-    }
-
     public String[] split(String regex) {
         return com.codename1.impl.JdkApiRewriteHelper.split(this, regex);
     }
