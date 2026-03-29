@@ -82,7 +82,6 @@ public class InteractionDialog extends Container implements AbstractDialog {
     private ActionListener pressedListener;
     private ActionListener releasedListener;
     private Command lastCommandPressed;
-    private int dialogType;
 
     /// Default constructor with no title
     public InteractionDialog() {
@@ -926,7 +925,7 @@ public class InteractionDialog extends Container implements AbstractDialog {
 
     /// {@inheritDoc}
     public void setDialogType(int dialogType) {
-        this.dialogType = dialogType;
+        // no-op for InteractionDialog. Dialog sounds are specific to Dialog/Form internals.
     }
 
     /// {@inheritDoc}
@@ -981,9 +980,6 @@ public class InteractionDialog extends Container implements AbstractDialog {
 
     /// Shows this interaction dialog and blocks until it is disposed.
     public Command showDialog() {
-        if (dialogType > 0) {
-            Display.getInstance().playDialogSound(dialogType);
-        }
         int width = Display.getInstance().getDisplayWidth();
         int height = Display.getInstance().getDisplayHeight();
         revalidate();
