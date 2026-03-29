@@ -1,5 +1,8 @@
 package com.codename1.impl;
 
+import com.codename1.util.regex.RE;
+import com.codename1.util.regex.RESyntaxException;
+
 /**
  * Bridge methods used by bytecode rewrite rules for JDK APIs that are risky/unsupported on some targets.
  */
@@ -21,27 +24,39 @@ public final class JdkApiRewriteHelper {
         if (regex.length() == 0) {
             return new String[]{source};
         }
-        java.util.Vector<String> out = new java.util.Vector<String>();
-        int start = 0;
-        int match;
-        while ((match = source.indexOf(regex, start)) >= 0) {
-            if (limit > 0 && out.size() == limit - 1) {
-                break;
+        try {
+            String[] split = new RE(regex).split(source);
+            if (limit > 0 && split.length > limit) {
+                String[] limited = new String[limit];
+                for (int i = 0; i < limit - 1; i++) {
+                    limited[i] = split[i];
+                }
+                StringBuilder remainder = new StringBuilder();
+                for (int i = limit - 1; i < split.length; i++) {
+                    if (i > limit - 1) {
+                        remainder.append(regex);
+                    }
+                    remainder.append(split[i]);
+                }
+                limited[limit - 1] = remainder.toString();
+                return limited;
             }
-            out.addElement(source.substring(start, match));
-            start = match + regex.length();
-        }
-        out.addElement(source.substring(start));
-        int resultSize = out.size();
-        if (limit == 0) {
-            while (resultSize > 0 && out.elementAt(resultSize - 1).length() == 0) {
-                resultSize--;
+            if (limit == 0) {
+                int end = split.length;
+                while (end > 0 && split[end - 1].length() == 0) {
+                    end--;
+                }
+                if (end == split.length) {
+                    return split;
+                }
+                String[] trimmed = new String[end];
+                System.arraycopy(split, 0, trimmed, 0, end);
+                return trimmed;
             }
+            return split;
+        } catch (RESyntaxException ex) {
+            java.util.List<String> fallback = com.codename1.util.StringUtil.tokenize(source, regex);
+            return fallback.toArray(new String[fallback.size()]);
         }
-        String[] result = new String[resultSize];
-        for (int i = 0; i < resultSize; i++) {
-            result[i] = out.elementAt(i);
-        }
-        return result;
     }
 }
