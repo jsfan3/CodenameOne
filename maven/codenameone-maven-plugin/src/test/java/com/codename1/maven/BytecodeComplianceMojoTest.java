@@ -2,6 +2,9 @@ package com.codename1.maven;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.apache.maven.artifact.DefaultArtifact;
+import org.apache.maven.artifact.handler.DefaultArtifactHandler;
+import org.apache.maven.project.MavenProject;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -10,10 +13,12 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.jar.JarEntry;
@@ -193,6 +198,45 @@ class BytecodeComplianceMojoTest {
         assertFalse(summary.contains(" | "), "Expected no pipe-delimited single-line formatting");
     }
 
+    @Test
+    void includesProvidedScopeDependenciesInComplianceScan(@TempDir Path tempDir) throws Exception {
+        Path providedJar = tempDir.resolve("provided.jar");
+        writeJar(providedJar, new JarEntryBytes("dep/ProvidedApi.class", classBytes("dep/ProvidedApi")));
+
+        BytecodeComplianceMojo mojo = new BytecodeComplianceMojo();
+        MavenProject project = new MavenProject();
+        project.setArtifacts(new HashSet<org.apache.maven.artifact.Artifact>(Collections.singleton(newArtifact("dep-provided", "provided", providedJar.toFile()))));
+        mojo.project = project;
+
+        List<?> jars = getDependencyJarsForScanning(mojo);
+        assertEquals(1, jars.size(), "Expected provided-scope jar to be included for compliance scanning");
+    }
+
+    @Test
+    void includesCn1libArtifactsInComplianceScan(@TempDir Path tempDir) throws Exception {
+        Path cn1lib = tempDir.resolve("maps.cn1lib");
+        writeJar(cn1lib, new JarEntryBytes("dep/MapContainer.class", classBytes("dep/MapContainer")));
+
+        BytecodeComplianceMojo mojo = new BytecodeComplianceMojo();
+        MavenProject project = new MavenProject();
+        project.setArtifacts(new HashSet<org.apache.maven.artifact.Artifact>(Collections.singleton(newArtifact("maps-lib", "compile", cn1lib.toFile()))));
+        mojo.project = project;
+
+        List<?> jars = getDependencyJarsForScanning(mojo);
+        assertEquals(1, jars.size(), "Expected .cn1lib artifact to be included for compliance scanning");
+    }
+
+    @Test
+    void indexesClassesInsideNestedArchivesInCn1lib(@TempDir Path tempDir) throws Exception {
+        Path cn1lib = tempDir.resolve("maps.cn1lib");
+        byte[] nestedZipBytes = zipBytes(new JarEntryBytes("dep/NestedApi.class", classBytes("dep/NestedApi")));
+        writeJar(cn1lib, new JarEntryBytes("META-INF/cn1lib/nativejavase.zip", nestedZipBytes));
+
+        BytecodeComplianceMojo mojo = new BytecodeComplianceMojo();
+        Map<String, ?> index = buildClassIndex(mojo, Collections.singletonList(cn1lib.toFile()));
+        assertTrue(index.containsKey("dep/NestedApi"), "Expected class in nested cn1lib archive to be indexed");
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, ?> buildClassIndex(BytecodeComplianceMojo mojo, List<java.io.File> roots) throws Exception {
         Method method = BytecodeComplianceMojo.class.getDeclaredMethod("buildClassIndex", List.class);
@@ -233,6 +277,20 @@ class BytecodeComplianceMojoTest {
         Method method = BytecodeComplianceMojo.class.getDeclaredMethod("buildFailureSummary", List.class);
         method.setAccessible(true);
         return (String) method.invoke(mojo, violations);
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<?> getDependencyJarsForScanning(BytecodeComplianceMojo mojo) throws Exception {
+        Method method = BytecodeComplianceMojo.class.getDeclaredMethod("getDependencyJarsForScanning");
+        method.setAccessible(true);
+        return (List<?>) method.invoke(mojo);
+    }
+
+    private org.apache.maven.artifact.Artifact newArtifact(String artifactId, String scope, java.io.File file) {
+        DefaultArtifact artifact = new DefaultArtifact("com.example", artifactId, "1.0", scope, "jar", null, new DefaultArtifactHandler("jar"));
+        artifact.setFile(file);
+        artifact.setScope(scope);
+        return artifact;
     }
 
     private Object newViolation(String sourceClass, String sourceMethod, String referencedMember, String suggestion, String sourcePath) throws Exception {
@@ -425,6 +483,18 @@ class BytecodeComplianceMojoTest {
                 out.closeEntry();
             }
         }
+    }
+
+    private byte[] zipBytes(JarEntryBytes... entries) throws Exception {
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try (JarOutputStream out = new JarOutputStream(bytes)) {
+            for (JarEntryBytes entry : entries) {
+                out.putNextEntry(new JarEntry(entry.path));
+                out.write(entry.bytes);
+                out.closeEntry();
+            }
+        }
+        return bytes.toByteArray();
     }
 
     private static class JarEntryBytes {

@@ -16,6 +16,8 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -27,15 +29,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Deque;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static com.codename1.maven.PathUtil.path;
 
@@ -394,46 +395,67 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
                         throw new MojoExecutionException("Failed reading class metadata from " + classFile, ex);
                     }
                 }
-            } else if (root.getName().endsWith(".jar")) {
-                JarFile jarFile = null;
+            } else if (isClassArchive(root)) {
                 try {
-                    jarFile = new JarFile(root);
-                    Enumeration<JarEntry> entries = jarFile.entries();
-                    while (entries.hasMoreElements()) {
-                        JarEntry entry = entries.nextElement();
-                        if (shouldSkipJarClassEntry(entry)) {
-                            continue;
-                        }
-                        InputStream inputStream = jarFile.getInputStream(entry);
-                        try {
-                            ClassMetadata metadata = readClassMetadata(inputStream, root + "!" + entry.getName());
-                            if (metadata != null) {
-                                index.put(metadata.name, metadata);
-                            }
-                        } finally {
-                            inputStream.close();
-                        }
-                    }
+                    indexArchive(root, index);
                 } catch (IOException ex) {
                     throw new MojoExecutionException("Failed reading jar metadata from " + root, ex);
-                } finally {
-                    if (jarFile != null) {
-                        try {
-                            jarFile.close();
-                        } catch (IOException ignored) {
-                        }
-                    }
                 }
             }
         }
         return index;
     }
 
-    private boolean shouldSkipJarClassEntry(JarEntry entry) {
-        if (entry.isDirectory()) {
+    private void indexArchive(File archive, Map<String, ClassMetadata> index) throws IOException {
+        InputStream fis = new BufferedInputStream(new FileInputStream(archive));
+        try {
+            indexArchiveStream(fis, archive.getAbsolutePath(), index);
+        } finally {
+            fis.close();
+        }
+    }
+
+    private void indexArchiveStream(InputStream archiveStream, String sourcePrefix, Map<String, ClassMetadata> index) throws IOException {
+        ZipInputStream zip = new ZipInputStream(archiveStream);
+        try {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                if (entry.isDirectory()) {
+                    continue;
+                }
+                String entryName = entry.getName();
+                byte[] bytes = readAllBytes(zip);
+                if (entryName.endsWith(".class")) {
+                    if (shouldSkipArchiveClassEntry(entryName)) {
+                        continue;
+                    }
+                    ClassMetadata metadata = readClassMetadata(new ByteArrayInputStream(bytes), sourcePrefix + "!" + entryName);
+                    if (metadata != null) {
+                        index.put(metadata.name, metadata);
+                    }
+                } else if (isClassArchiveName(entryName)) {
+                    indexArchiveStream(new ByteArrayInputStream(bytes), sourcePrefix + "!" + entryName, index);
+                }
+            }
+        } finally {
+            zip.close();
+        }
+    }
+
+    private byte[] readAllBytes(InputStream input) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int len;
+        while ((len = input.read(buffer)) != -1) {
+            out.write(buffer, 0, len);
+        }
+        return out.toByteArray();
+    }
+
+    private boolean shouldSkipArchiveClassEntry(String name) {
+        if (name == null || name.isEmpty()) {
             return true;
         }
-        String name = entry.getName();
         if (!name.endsWith(".class")) {
             return true;
         }
@@ -441,6 +463,21 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
             return true;
         }
         return name.startsWith("META-INF/versions/");
+    }
+
+    private boolean isClassArchive(File file) {
+        if (file == null || !file.isFile()) {
+            return false;
+        }
+        return isClassArchiveName(file.getName());
+    }
+
+    private boolean isClassArchiveName(String name) {
+        if (name == null) {
+            return false;
+        }
+        String lower = name.toLowerCase();
+        return lower.endsWith(".jar") || lower.endsWith(".cn1lib") || lower.endsWith(".zip");
     }
 
     private ClassMetadata readClassMetadata(InputStream inputStream, String sourceDescription) throws IOException {
@@ -486,9 +523,13 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
             if (artifact.getGroupId().equals("com.codenameone") && artifact.getArtifactId().equals("java-runtime")) {
                 continue;
             }
-            if ("compile".equals(artifact.getScope()) || "system".equals(artifact.getScope()) || "test".equals(artifact.getScope())) {
+            if ("compile".equals(artifact.getScope())
+                    || "provided".equals(artifact.getScope())
+                    || "system".equals(artifact.getScope())
+                    || "runtime".equals(artifact.getScope())
+                    || "test".equals(artifact.getScope())) {
                 File jar = getJar(artifact);
-                if (jar != null && jar.exists() && jar.getName().endsWith(".jar")) {
+                if (isClassArchive(jar)) {
                     jars.add(jar);
                 }
             }
