@@ -3659,6 +3659,9 @@ public final class Display extends CN1Constants {
         if ("blockCopyPaste".equals(key)) {
             impl.blockCopyPaste("true".equals(value));
         }
+        if ("DisableScreenshots".equals(key)) {
+            impl.setDisableScreenshots("true".equalsIgnoreCase(value));
+        }
         if ("Component.revalidateOnStyleChange".equals(key)) {
             Component.setRevalidateOnStyleChange("true".equalsIgnoreCase(value));
         }

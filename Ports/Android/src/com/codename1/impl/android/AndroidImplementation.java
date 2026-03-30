@@ -260,6 +260,24 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
     public static CodenameOneActivity getActivity() {
         return activity;
     }
+    
+    @Override
+    public void setDisableScreenshots(final boolean disable) {
+        final CodenameOneActivity a = getActivity();
+        if (a == null || a.getWindow() == null) {
+            return;
+        }
+        a.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (disable) {
+                    a.getWindow().addFlags(WindowManager.LayoutParams.FLAG_SECURE);
+                } else {
+                    a.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_SECURE);
+                }
+            }
+        });
+    }
 
     /**
      * @param aActivity the activity to set

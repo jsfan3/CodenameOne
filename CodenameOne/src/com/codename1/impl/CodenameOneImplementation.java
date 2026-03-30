@@ -7711,6 +7711,14 @@ public abstract class CodenameOneImplementation {
     public void blockCopyPaste(boolean blockCopyPaste) {
 
     }
+    
+    /// Enables/disables screenshot blocking behavior where supported by the platform.
+    ///
+    /// #### Parameters
+    ///
+    /// - `disable`: True to disable screenshots/screen capture where possible.
+    public void setDisableScreenshots(boolean disable) {
+    }
 
     /// Checks if this platform supports custom database paths.  On platforms
     /// where this returns true, `#openOrCreateDB(java.lang.String)`

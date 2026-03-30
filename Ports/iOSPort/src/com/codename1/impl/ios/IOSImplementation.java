@@ -224,6 +224,11 @@ public class IOSImplementation extends CodenameOneImplementation {
             nativeInstance.setDisableScreenshots(true);
         }
     }
+    
+    @Override
+    public void setDisableScreenshots(boolean disable) {
+        nativeInstance.setDisableScreenshots(disable);
+    }
 
     public void setThreadPriority(Thread t, int p) {
     }
