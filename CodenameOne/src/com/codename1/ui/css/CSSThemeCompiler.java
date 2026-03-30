@@ -321,6 +321,9 @@ public class CSSThemeCompiler {
     }
 
     private String statePrefix(String pseudo) {
+        if ("unselected".equals(pseudo)) {
+            return "";
+        }
         if ("selected".equals(pseudo)) {
             return "sel#";
         }
