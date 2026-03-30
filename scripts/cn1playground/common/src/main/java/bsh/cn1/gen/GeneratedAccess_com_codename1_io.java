@@ -1157,12 +1157,6 @@ public final class GeneratedAccess_com_codename1_io {
                 com.codename1.io.Util.setIgnorCharsWhileEncoding((java.lang.String) adaptedArgs[0]); return null;
             }
         }
-        if ("setImplementation".equals(name)) {
-            if (matches(safeArgs, new Class<?>[]{com.codename1.impl.CodenameOneImplementation.class}, false)) {
-                Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{com.codename1.impl.CodenameOneImplementation.class}, false);
-                com.codename1.io.Util.setImplementation((com.codename1.impl.CodenameOneImplementation) adaptedArgs[0]); return null;
-            }
-        }
         if ("sleep".equals(name)) {
             if (matches(safeArgs, new Class<?>[]{java.lang.Integer.class}, false)) {
                 Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{java.lang.Integer.class}, false);

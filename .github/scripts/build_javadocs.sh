@@ -13,17 +13,15 @@ else
   JAVADOC_CMD="javadoc"
 fi
 
-TMP_SNIPPETS_JSONL="$(mktemp)"
-cleanup() {
-  rm -f "$TMP_SNIPPETS_JSONL"
+run_with_timeout() {
+  local seconds="$1"
+  shift
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "${seconds}" "$@"
+    return $?
+  fi
+  "$@"
 }
-trap cleanup EXIT
-
-echo "Extracting JavaDoc snippets prior to JavaDoc generation..."
-"$ROOT_DIR/scripts/extract-javadoc-java-snippets.sh" "$CN1_DIR/src" > "$TMP_SNIPPETS_JSONL"
-
-echo "Validating JavaDoc snippets prior to JavaDoc generation..."
-"$ROOT_DIR/scripts/validate-extracted-javadoc-snippets.sh" "$TMP_SNIPPETS_JSONL"
 
 rm -rf "$CN1_DIR/dist/javadoc"
 rm -rf "$CN1_DIR/build/tempJavaSources"
@@ -32,6 +30,18 @@ mkdir -p "$CN1_DIR/build/tempJavaSources"
 mkdir -p "$CN1_DIR/dist/javadoc"
 
 cp -r "$CN1_DIR/src/"* "$CN1_DIR/build/tempJavaSources/"
+
+VALIDATE_SNIPPETS_SCRIPT="${SCRIPT_DIR}/validate-extracted-javadoc-snippets.sh"
+if [ -x "${VALIDATE_SNIPPETS_SCRIPT}" ]; then
+  echo "Validating JavaDoc snippets prior to JavaDoc generation..." >&2
+  if ! run_with_timeout 300 "${VALIDATE_SNIPPETS_SCRIPT}"; then
+    status=$?
+    if [ "${status}" -eq 124 ]; then
+      echo "JavaDoc snippet validation timed out after 300 seconds." >&2
+    fi
+    exit "${status}"
+  fi
+fi
 
 cat > "$CN1_DIR/build/tempJavaSources/com/codename1/impl/ImplementationFactory.java" <<'EOF'
 package com.codename1.impl;

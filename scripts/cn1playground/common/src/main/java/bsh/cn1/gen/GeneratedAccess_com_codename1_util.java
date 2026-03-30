@@ -497,12 +497,6 @@ public final class GeneratedAccess_com_codename1_util {
                 return com.codename1.util.StringUtil.replaceFirst((java.lang.String) adaptedArgs[0], (java.lang.String) adaptedArgs[1], (java.lang.String) adaptedArgs[2]);
             }
         }
-        if ("setImplementation".equals(name)) {
-            if (matches(safeArgs, new Class<?>[]{com.codename1.impl.CodenameOneImplementation.class}, false)) {
-                Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{com.codename1.impl.CodenameOneImplementation.class}, false);
-                com.codename1.util.StringUtil.setImplementation((com.codename1.impl.CodenameOneImplementation) adaptedArgs[0]); return null;
-            }
-        }
         if ("tokenize".equals(name)) {
             if (matches(safeArgs, new Class<?>[]{java.lang.String.class, java.lang.Character.class}, false)) {
                 Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{java.lang.String.class, java.lang.Character.class}, false);
