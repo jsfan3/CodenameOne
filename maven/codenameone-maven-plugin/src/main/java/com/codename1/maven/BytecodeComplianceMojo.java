@@ -655,6 +655,9 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
             if (isArrayDescriptor(owner)) {
                 return;
             }
+            if (isInternalRewriteHelper(owner)) {
+                return;
+            }
             if (projectAndDependencyIndex.containsKey(owner) || allowedIndex.containsKey(owner)) {
                 return;
             }
@@ -673,11 +676,17 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
             if (isArrayDescriptor(owner)) {
                 return true;
             }
+            if (isInternalRewriteHelper(owner)) {
+                return true;
+            }
             return resolveMember(owner, memberKey(name, descriptor), true);
         }
 
         private boolean shouldAllowField(String owner, String name, String descriptor) {
             if (isArrayDescriptor(owner)) {
+                return true;
+            }
+            if (isInternalRewriteHelper(owner)) {
                 return true;
             }
             return resolveMember(owner, memberKey(name, descriptor), false);
@@ -719,6 +728,10 @@ public class BytecodeComplianceMojo extends AbstractCN1Mojo {
 
     private static boolean isArrayDescriptor(String type) {
         return type != null && type.startsWith("[");
+    }
+
+    private static boolean isInternalRewriteHelper(String owner) {
+        return JDK_API_REWRITE_HELPER_INTERNAL_NAME.equals(owner);
     }
 
     private static String replacementFor(String referencedMember) {

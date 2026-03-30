@@ -131,6 +131,19 @@ class BytecodeComplianceMojoTest {
     }
 
     @Test
+    void allowsRewriteHelperCallsAfterSplitRewrite(@TempDir Path tempDir) throws Exception {
+        Path outputDir = tempDir.resolve("classes");
+        Files.createDirectories(outputDir);
+        writeStringApiUsageClass(outputDir, "app/StringApiUser");
+
+        BytecodeComplianceMojo mojo = new BytecodeComplianceMojo();
+        applyInvocationRewrites(mojo, outputDir.toFile());
+
+        List<?> violations = scanProjectClasses(mojo, outputDir, Collections.<String, Object>emptyMap(), Collections.<String, Object>emptyMap());
+        assertTrue(violations.isEmpty(), "Expected no violations for internal rewrite helper callsites after rewrite");
+    }
+
+    @Test
     void skipsModuleInfoAndMultiReleaseJarEntries(@TempDir Path tempDir) throws Exception {
         Path jarFile = tempDir.resolve("deps.jar");
         writeJar(jarFile,
