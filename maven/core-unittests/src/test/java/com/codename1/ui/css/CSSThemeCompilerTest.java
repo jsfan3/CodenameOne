@@ -98,4 +98,15 @@ public class CSSThemeCompilerTest extends UITestBase {
         assertEquals("ff0000", theme.get("$DarkButton.press#fgColor"));
     }
 
+    @Test
+    public void testCompilesUnselectedStateSelector() {
+        CSSThemeCompiler compiler = new CSSThemeCompiler();
+        MutableResource resource = new MutableResource();
+
+        compiler.compile("Button.unselected{color:white;}", resource, "Theme");
+
+        Hashtable theme = resource.getTheme("Theme");
+        assertEquals("ffffff", theme.get("Button.fgColor"));
+    }
+
 }
