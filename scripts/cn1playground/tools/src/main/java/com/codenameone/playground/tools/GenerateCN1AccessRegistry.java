@@ -24,6 +24,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -47,6 +48,10 @@ public final class GenerateCN1AccessRegistry {
     private static final int FIND_CLASS_CHUNK_SIZE = 64;
     private static final char MEMBER_SEPARATOR = '\u001f';
     private static final Map<String, Boolean> RUNTIME_PUBLIC_TYPE_CACHE = new HashMap<String, Boolean>();
+    private static final Set<String> INTERNAL_CN1_TYPES = new HashSet<String>(Arrays.asList(
+            "com.codename1.ui.Accessor",
+            "com.codename1.io.IOAccessor"
+    ));
 
     private static final String[] INDEX_PACKAGE_PREFIXES = new String[]{
             "com.codename1.",
@@ -1061,12 +1066,15 @@ private static List<ApiMethod> filterBridgeLikeMethods(List<ApiMethod> methods, 
     }
 
     private static boolean isPublicRuntimeType(String className) {
+        if (INTERNAL_CN1_TYPES.contains(className)) {
+            return false;
+        }
         Boolean cached = RUNTIME_PUBLIC_TYPE_CACHE.get(className);
         if (cached != null) {
             return cached.booleanValue();
         }
         Class<?> runtimeClass = loadRuntimeClass(className);
-        boolean supported = runtimeClass != null && java.lang.reflect.Modifier.isPublic(runtimeClass.getModifiers());
+        boolean supported = runtimeClass == null || java.lang.reflect.Modifier.isPublic(runtimeClass.getModifiers());
         RUNTIME_PUBLIC_TYPE_CACHE.put(className, Boolean.valueOf(supported));
         return supported;
     }

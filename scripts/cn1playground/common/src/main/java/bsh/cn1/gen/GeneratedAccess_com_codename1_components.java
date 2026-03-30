@@ -26493,6 +26493,12 @@ public final class GeneratedAccess_com_codename1_components {
                 typedTarget.clearClientProperties(); return null;
             }
         }
+        if ("configureCommands".equals(name)) {
+            if (matches(safeArgs, new Class<?>[]{com.codename1.ui.Command[].class, java.lang.Boolean.class}, false)) {
+                Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{com.codename1.ui.Command[].class, java.lang.Boolean.class}, false);
+                typedTarget.configureCommands((com.codename1.ui.Command[]) adaptedArgs[0], ((Boolean) adaptedArgs[1]).booleanValue()); return null;
+            }
+        }
         if ("contains".equals(name)) {
             if (matches(safeArgs, new Class<?>[]{com.codename1.ui.Component.class}, false)) {
                 Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{com.codename1.ui.Component.class}, false);
@@ -27757,6 +27763,18 @@ public final class GeneratedAccess_com_codename1_components {
                 typedTarget.setCursor(((Number) adaptedArgs[0]).intValue()); return null;
             }
         }
+        if ("setDefaultCommand".equals(name)) {
+            if (matches(safeArgs, new Class<?>[]{com.codename1.ui.Command.class}, false)) {
+                Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{com.codename1.ui.Command.class}, false);
+                typedTarget.setDefaultCommand((com.codename1.ui.Command) adaptedArgs[0]); return null;
+            }
+        }
+        if ("setDialogType".equals(name)) {
+            if (matches(safeArgs, new Class<?>[]{java.lang.Integer.class}, false)) {
+                Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{java.lang.Integer.class}, false);
+                typedTarget.setDialogType(((Number) adaptedArgs[0]).intValue()); return null;
+            }
+        }
         if ("setDialogUIID".equals(name)) {
             if (matches(safeArgs, new Class<?>[]{java.lang.String.class}, false)) {
                 Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{java.lang.String.class}, false);
@@ -28169,6 +28187,12 @@ public final class GeneratedAccess_com_codename1_components {
                 typedTarget.setTensileLength(((Number) adaptedArgs[0]).intValue()); return null;
             }
         }
+        if ("setTimeout".equals(name)) {
+            if (matches(safeArgs, new Class<?>[]{java.lang.Long.class}, false)) {
+                Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{java.lang.Long.class}, false);
+                typedTarget.setTimeout(((Number) adaptedArgs[0]).longValue()); return null;
+            }
+        }
         if ("setTitle".equals(name)) {
             if (matches(safeArgs, new Class<?>[]{java.lang.String.class}, false)) {
                 Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{java.lang.String.class}, false);
@@ -28179,6 +28203,12 @@ public final class GeneratedAccess_com_codename1_components {
             if (matches(safeArgs, new Class<?>[]{java.lang.String.class}, false)) {
                 Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{java.lang.String.class}, false);
                 typedTarget.setTooltip((java.lang.String) adaptedArgs[0]); return null;
+            }
+        }
+        if ("setTransitions".equals(name)) {
+            if (matches(safeArgs, new Class<?>[]{com.codename1.ui.animations.Transition.class}, false)) {
+                Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{com.codename1.ui.animations.Transition.class}, false);
+                typedTarget.setTransitions((com.codename1.ui.animations.Transition) adaptedArgs[0]); return null;
             }
         }
         if ("setTraversable".equals(name)) {
@@ -28237,6 +28267,11 @@ public final class GeneratedAccess_com_codename1_components {
             if (matches(safeArgs, new Class<?>[]{java.lang.Integer.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Integer.class}, false)) {
                 Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{java.lang.Integer.class, java.lang.Integer.class, java.lang.Integer.class, java.lang.Integer.class}, false);
                 typedTarget.show(((Number) adaptedArgs[0]).intValue(), ((Number) adaptedArgs[1]).intValue(), ((Number) adaptedArgs[2]).intValue(), ((Number) adaptedArgs[3]).intValue()); return null;
+            }
+        }
+        if ("showDialog".equals(name)) {
+            if (safeArgs.length == 0) {
+                return typedTarget.showDialog();
             }
         }
         if ("showPopupDialog".equals(name)) {
@@ -34978,6 +35013,12 @@ public final class GeneratedAccess_com_codename1_components {
                 typedTarget.clearComponentsAwaitingRelease(); return null;
             }
         }
+        if ("configureCommands".equals(name)) {
+            if (matches(safeArgs, new Class<?>[]{com.codename1.ui.Command[].class, java.lang.Boolean.class}, false)) {
+                Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{com.codename1.ui.Command[].class, java.lang.Boolean.class}, false);
+                typedTarget.configureCommands((com.codename1.ui.Command[]) adaptedArgs[0], ((Boolean) adaptedArgs[1]).booleanValue()); return null;
+            }
+        }
         if ("contains".equals(name)) {
             if (matches(safeArgs, new Class<?>[]{com.codename1.ui.Component.class}, false)) {
                 Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{com.codename1.ui.Component.class}, false);
@@ -36011,6 +36052,11 @@ public final class GeneratedAccess_com_codename1_components {
                 return typedTarget.isIgnorePointerEvents();
             }
         }
+        if ("isInteractionDialogMode".equals(name)) {
+            if (safeArgs.length == 0) {
+                return typedTarget.isInteractionDialogMode();
+            }
+        }
         if ("isMinimizeOnBack".equals(name)) {
             if (safeArgs.length == 0) {
                 return typedTarget.isMinimizeOnBack();
@@ -36841,6 +36887,12 @@ public final class GeneratedAccess_com_codename1_components {
                 typedTarget.setInlineUnselectedStyles((java.lang.String) adaptedArgs[0]); return null;
             }
         }
+        if ("setInteractionDialogMode".equals(name)) {
+            if (matches(safeArgs, new Class<?>[]{java.lang.Boolean.class}, false)) {
+                Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{java.lang.Boolean.class}, false);
+                typedTarget.setInteractionDialogMode(((Boolean) adaptedArgs[0]).booleanValue()); return null;
+            }
+        }
         if ("setIsScrollVisible".equals(name)) {
             if (matches(safeArgs, new Class<?>[]{java.lang.Boolean.class}, false)) {
                 Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{java.lang.Boolean.class}, false);
@@ -37202,6 +37254,12 @@ public final class GeneratedAccess_com_codename1_components {
             if (matches(safeArgs, new Class<?>[]{com.codename1.ui.animations.Transition.class}, false)) {
                 Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{com.codename1.ui.animations.Transition.class}, false);
                 typedTarget.setTransitionOutAnimator((com.codename1.ui.animations.Transition) adaptedArgs[0]); return null;
+            }
+        }
+        if ("setTransitions".equals(name)) {
+            if (matches(safeArgs, new Class<?>[]{com.codename1.ui.animations.Transition.class}, false)) {
+                Object[] adaptedArgs = adaptArgs(safeArgs, new Class<?>[]{com.codename1.ui.animations.Transition.class}, false);
+                typedTarget.setTransitions((com.codename1.ui.animations.Transition) adaptedArgs[0]); return null;
             }
         }
         if ("setTraversable".equals(name)) {
