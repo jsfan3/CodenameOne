@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const highlighter = window.Cn1JavaDocHighlight;
-  const playgroundBase = 'https://www.codenameone.com/playground/?code=';
+  const playgroundBase = 'https://www.codenameone.com/playground-app/?code=';
   if (!highlighter) {
     return;
   }
