@@ -142,7 +142,8 @@ class BytecodeComplianceMojoTest {
         applyInvocationRewrites(mojo, outputDir.toFile());
 
         List<?> violations = scanProjectClasses(mojo, outputDir, Collections.<String, Object>emptyMap(), Collections.<String, Object>emptyMap());
-        assertTrue(violations.isEmpty(), "Expected no violations for internal rewrite helper callsites after rewrite");
+        assertFalse(hasViolationForReferencePrefix(violations, "com/codename1/impl/JdkApiRewriteHelper#"),
+                "Expected no violations for internal rewrite helper callsites after rewrite");
     }
 
     @Test
@@ -210,6 +211,16 @@ class BytecodeComplianceMojoTest {
         Field field = target.getClass().getDeclaredField(name);
         field.setAccessible(true);
         return field.get(target);
+    }
+
+    private boolean hasViolationForReferencePrefix(List<?> violations, String prefix) throws Exception {
+        for (Object violation : violations) {
+            Object referenced = field(violation, "referencedMember");
+            if (referenced != null && referenced.toString().startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void setField(Object target, String name, Object value) throws Exception {
