@@ -10,6 +10,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -20,6 +21,7 @@ import java.util.jar.JarOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 class BytecodeComplianceMojoTest {
 
@@ -131,6 +133,20 @@ class BytecodeComplianceMojoTest {
     }
 
     @Test
+    void allowsRewriteHelperCallsAfterSplitRewrite(@TempDir Path tempDir) throws Exception {
+        Path outputDir = tempDir.resolve("classes");
+        Files.createDirectories(outputDir);
+        writeStringApiUsageClass(outputDir, "app/StringApiUser");
+
+        BytecodeComplianceMojo mojo = new BytecodeComplianceMojo();
+        applyInvocationRewrites(mojo, outputDir.toFile());
+
+        List<?> violations = scanProjectClasses(mojo, outputDir, Collections.<String, Object>emptyMap(), Collections.<String, Object>emptyMap());
+        assertFalse(hasViolationForReferencePrefix(violations, "com/codename1/impl/JdkApiRewriteHelper#"),
+                "Expected no violations for internal rewrite helper callsites after rewrite");
+    }
+
+    @Test
     void skipsModuleInfoAndMultiReleaseJarEntries(@TempDir Path tempDir) throws Exception {
         Path jarFile = tempDir.resolve("deps.jar");
         writeJar(jarFile,
@@ -159,6 +175,24 @@ class BytecodeComplianceMojoTest {
         assertEquals(1, index.size(), "Expected invalid class entry to be skipped");
     }
 
+    @Test
+    void buildFailureSummaryUsesReadableBulletFormat(@TempDir Path tempDir) throws Exception {
+        Path reportFile = tempDir.resolve("codenameone").resolve("compliance_check.txt");
+        Files.createDirectories(reportFile.getParent());
+        Files.write(reportFile, new byte[0]);
+
+        BytecodeComplianceMojo mojo = new BytecodeComplianceMojo();
+        setField(mojo, "complianceOutputFile", reportFile.toFile());
+        List<Object> violations = new ArrayList<Object>();
+        violations.add(newViolation("app/Caller", "run()V", "forbidden/Api#m()V", null, "app/Caller.class"));
+
+        String summary = buildFailureSummary(mojo, violations);
+        assertTrue(summary.contains("Compliance check failed with 1 forbidden API reference."), "Expected count in summary");
+        assertTrue(summary.contains("First 1 violation(s):"), "Expected first violations header");
+        assertTrue(summary.contains("\n - app/Caller#run()V -> forbidden/Api#m()V (app/Caller.class)"), "Expected bullet line with source path");
+        assertFalse(summary.contains(" | "), "Expected no pipe-delimited single-line formatting");
+    }
+
     @SuppressWarnings("unchecked")
     private Map<String, ?> buildClassIndex(BytecodeComplianceMojo mojo, List<java.io.File> roots) throws Exception {
         Method method = BytecodeComplianceMojo.class.getDeclaredMethod("buildClassIndex", List.class);
@@ -177,6 +211,35 @@ class BytecodeComplianceMojoTest {
         Field field = target.getClass().getDeclaredField(name);
         field.setAccessible(true);
         return field.get(target);
+    }
+
+    private boolean hasViolationForReferencePrefix(List<?> violations, String prefix) throws Exception {
+        for (Object violation : violations) {
+            Object referenced = field(violation, "referencedMember");
+            if (referenced != null && referenced.toString().startsWith(prefix)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void setField(Object target, String name, Object value) throws Exception {
+        Field field = target.getClass().getDeclaredField(name);
+        field.setAccessible(true);
+        field.set(target, value);
+    }
+
+    private String buildFailureSummary(BytecodeComplianceMojo mojo, List<?> violations) throws Exception {
+        Method method = BytecodeComplianceMojo.class.getDeclaredMethod("buildFailureSummary", List.class);
+        method.setAccessible(true);
+        return (String) method.invoke(mojo, violations);
+    }
+
+    private Object newViolation(String sourceClass, String sourceMethod, String referencedMember, String suggestion, String sourcePath) throws Exception {
+        Class<?> violationClass = Class.forName("com.codename1.maven.BytecodeComplianceMojo$Violation");
+        java.lang.reflect.Constructor<?> ctor = violationClass.getDeclaredConstructor(String.class, String.class, String.class, String.class, String.class);
+        ctor.setAccessible(true);
+        return ctor.newInstance(sourceClass, sourceMethod, referencedMember, suggestion, sourcePath);
     }
 
 
