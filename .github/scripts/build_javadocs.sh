@@ -13,6 +13,18 @@ else
   JAVADOC_CMD="javadoc"
 fi
 
+TMP_SNIPPETS_JSONL="$(mktemp)"
+cleanup() {
+  rm -f "$TMP_SNIPPETS_JSONL"
+}
+trap cleanup EXIT
+
+echo "Extracting JavaDoc snippets prior to JavaDoc generation..."
+"$ROOT_DIR/scripts/extract-javadoc-java-snippets.sh" "$CN1_DIR/src" > "$TMP_SNIPPETS_JSONL"
+
+echo "Validating JavaDoc snippets prior to JavaDoc generation..."
+"$ROOT_DIR/scripts/validate-extracted-javadoc-snippets.sh" "$TMP_SNIPPETS_JSONL"
+
 rm -rf "$CN1_DIR/dist/javadoc"
 rm -rf "$CN1_DIR/build/tempJavaSources"
 
