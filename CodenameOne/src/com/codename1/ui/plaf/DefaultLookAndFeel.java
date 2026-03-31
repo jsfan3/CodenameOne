@@ -815,6 +815,27 @@ public class DefaultLookAndFeel extends LookAndFeel implements FocusListener {
         }
     }
 
+    private int getTextAreaVerticalAlignmentOffset(TextArea ta, int lineCount, int fontHeight) {
+        if (lineCount <= 0) {
+            return 0;
+        }
+
+        int contentHeight = fontHeight * lineCount + ta.getRowsGap() * Math.max(0, lineCount - 1);
+        int remainingHeight = ta.getInnerHeight() - contentHeight;
+        if (remainingHeight <= 0) {
+            return 0;
+        }
+
+        switch (ta.getVerticalAlignment()) {
+            case Component.CENTER:
+                return remainingHeight / 2;
+            case Component.BOTTOM:
+                return remainingHeight;
+            default:
+                return 0;
+        }
+    }
+
     @Override
     public Spans calculateTextAreaSpan(TextSelection sel, TextArea ta) {
         Spans out = sel.newSpans();
@@ -826,17 +847,7 @@ public class DefaultLookAndFeel extends LookAndFeel implements FocusListener {
 
         int leftPadding = ta.getStyle().getPaddingLeft(ta.isRTL());
         int rightPadding = ta.getStyle().getPaddingRight(ta.isRTL());
-        int topPadding = ta.getStyle().getPaddingTop();
-        switch (ta.getVerticalAlignment()) {
-            case Component.CENTER:
-                topPadding += Math.max(0, (ta.getInnerHeight() - (ta.getRowsGap() + fontHeight) * line) / 2);
-                break;
-            case Component.BOTTOM:
-                topPadding += Math.max(0, (ta.getInnerHeight() - (ta.getRowsGap() + fontHeight) * line));
-                break;
-            default:
-                break;
-        }
+        int topPadding = ta.getStyle().getPaddingTop() + getTextAreaVerticalAlignmentOffset(ta, line, fontHeight);
         int posOffset = 0;
         int lastRowBottom = 0;
         for (int i = 0; i < line; i++) {
@@ -908,17 +919,7 @@ public class DefaultLookAndFeel extends LookAndFeel implements FocusListener {
 
         int leftPadding = ta.getStyle().getPaddingLeft(ta.isRTL());
         int rightPadding = ta.getStyle().getPaddingRight(ta.isRTL());
-        int topPadding = ta.getStyle().getPaddingTop();
-        switch (ta.getVerticalAlignment()) {
-            case Component.CENTER:
-                topPadding += Math.max(0, (ta.getInnerHeight() - ta.getRowsGap() * (line - 1) - fontHeight * line) / 2);
-                break;
-            case Component.BOTTOM:
-                topPadding += Math.max(0, (ta.getInnerHeight() - ta.getRowsGap() * (line - 1) - fontHeight * line));
-                break;
-            default:
-                break;
-        }
+        int topPadding = ta.getStyle().getPaddingTop() + getTextAreaVerticalAlignmentOffset(ta, line, fontHeight);
         boolean shouldBreak = false;
 
         for (int i = 0; i < line; i++) {
@@ -2186,7 +2187,9 @@ public class DefaultLookAndFeel extends LookAndFeel implements FocusListener {
                     break;
             }
         } else {
-            cursorY = ta.getY() + style.getPaddingTop() + ta.getCursorY() * (ta.getRowsGap() + f.getHeight());
+            cursorY = ta.getY() + style.getPaddingTop()
+                    + getTextAreaVerticalAlignmentOffset(ta, ta.getLines(), f.getHeight())
+                    + ta.getCursorY() * (ta.getRowsGap() + f.getHeight());
         }
         int cursorX = getTextFieldCursorX(ta);
 
