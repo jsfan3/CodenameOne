@@ -2,6 +2,7 @@ package com.codenameone.examples.hellocodenameone.tests;
 
 import com.codename1.ui.Component;
 import com.codename1.ui.Container;
+import com.codename1.ui.Font;
 import com.codename1.ui.Form;
 import com.codename1.ui.Label;
 import com.codename1.ui.TextArea;
@@ -10,6 +11,8 @@ import com.codename1.ui.layouts.BorderLayout;
 import com.codename1.ui.layouts.GridLayout;
 
 public class TextAreaAlignmentScreenshotTest extends BaseTest {
+    private static final Font SMALL_FONT = Font.createSystemFont(Font.FACE_SYSTEM, Font.STYLE_PLAIN, Font.SIZE_SMALL);
+
     @Override
     public boolean runTest() {
         Form form = createForm("Text Alignment", new BorderLayout(), "TextAreaAlignmentStates");
@@ -38,16 +41,19 @@ public class TextAreaAlignmentScreenshotTest extends BaseTest {
     private Container createSample(String title, TextArea input) {
         Container wrapper = new Container(new BorderLayout());
         wrapper.getAllStyles().setPadding(2, 2, 2, 2);
-        wrapper.add(BorderLayout.NORTH, new Label(title));
+        Label titleLabel = new Label(title);
+        titleLabel.getAllStyles().setFont(SMALL_FONT);
+        wrapper.add(BorderLayout.NORTH, titleLabel);
         wrapper.add(BorderLayout.CENTER, input);
         return wrapper;
     }
 
     private TextField createField(int valign) {
         TextField field = new TextField("Single line");
+        field.getAllStyles().setFont(SMALL_FONT);
         field.setVerticalAlignment(valign);
         field.setEditable(false);
-        field.setPreferredH(field.getPreferredH() * 2);
+        field.setPreferredH(field.getPreferredH() * 3);
         return field;
     }
 
@@ -56,6 +62,7 @@ public class TextAreaAlignmentScreenshotTest extends BaseTest {
                 ? new TextArea("Line 1\nLine 2\nLine 3\nLine 4\nLine 5")
                 : new TextArea("Line 1\nLine 2");
         area.setSingleLineTextArea(false);
+        area.getAllStyles().setFont(SMALL_FONT);
         area.setEditable(false);
         area.setVerticalAlignment(valign);
         area.setRows(overflow ? 3 : 4);
