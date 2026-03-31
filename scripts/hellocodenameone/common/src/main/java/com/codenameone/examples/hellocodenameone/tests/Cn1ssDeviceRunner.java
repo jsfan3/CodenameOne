@@ -70,6 +70,7 @@ public final class Cn1ssDeviceRunner extends DeviceRunner {
             new MediaPlaybackScreenshotTest(),
             new SheetScreenshotTest(),
             new ImageViewerNavigationScreenshotTest(),
+            new TextAreaAlignmentScreenshotTest(),
             // Keep this as the last screenshot test; orientation changes can leak into subsequent screenshots.
             new OrientationLockScreenshotTest(),
             new InPlaceEditViewTest(),

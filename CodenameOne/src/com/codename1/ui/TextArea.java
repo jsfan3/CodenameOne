@@ -358,7 +358,7 @@ public class TextArea extends Component implements ActionSource, TextHolder {
         setCursor(Component.TEXT_CURSOR);
     }
 
-    /// Indicates the default vertical alignment for a text field, only applies to single line text fields
+    /// Indicates the default vertical alignment for a text field.
     ///
     /// #### Returns
     ///
@@ -367,7 +367,7 @@ public class TextArea extends Component implements ActionSource, TextHolder {
         return defaultValign;
     }
 
-    /// Indicates the default vertical alignment for a text field, only applies to single line text fields
+    /// Indicates the default vertical alignment for a text field.
     ///
     /// #### Parameters
     ///
@@ -1814,12 +1814,11 @@ public class TextArea extends Component implements ActionSource, TextHolder {
         return "".equals(getText());
     }
 
-    /// Returns the vertical alignment of the text field, this only applies to single line text field
+    /// Returns the vertical alignment of the text field.
     ///
-    /// **NOTE:** If the text area is an editable, multi-line text field,
-    /// and the platform doesn't support vertical alignment with its native text editor,
-    /// then this will always return `Component#TOP`.  Currently no platforms support
-    /// vertical alignment of multiline text areas.
+    /// For multi-line text areas, this alignment is applied only while there is extra
+    /// vertical space in the component. If the text content uses all available height
+    /// (or overflows), the rendering naturally starts from the top.
     ///
     /// #### Returns
     ///
@@ -1833,27 +1832,14 @@ public class TextArea extends Component implements ActionSource, TextHolder {
     ///
     /// - #BOTTOM
     public int getVerticalAlignment() {
-        if (valign != TOP && !isSingleLineTextArea() && isEditable() && !Display.impl.supportsNativeTextAreaVerticalAlignment()) {
-            // If this is a multiline text field, then most platforms don't support
-            // vertical alignment in their native text areas, so it looks bad
-            // if the lightweight rendering is in the middle, and then the native is
-            // aligned top.
-            // This is not a perfect solution (forcing it to top in such cases),
-            // but it is better than alternatives.
-            return TOP;
-        }
         return valign;
     }
 
     /// Sets the vertical alignment of the text field to one of: CENTER, TOP, BOTTOM
     ///
-    /// only applies to single line text field
-    ///
-    /// **NOTE:** If the text area is an editable, multi-line text field,
-    /// and the platform doesn't support vertical alignment with its native text editor,
-    /// then `#getVerticalAlignment()` will always return `Component#TOP`, no
-    /// matter what value you set here.  Currently no platforms support
-    /// vertical alignment of multiline text areas.
+    /// For multi-line text areas, this alignment is applied only when there is extra
+    /// vertical space in the component. If there is no extra room, alignment becomes
+    /// effectively top-aligned because content already fills the available area.
     ///
     /// #### Parameters
     ///
