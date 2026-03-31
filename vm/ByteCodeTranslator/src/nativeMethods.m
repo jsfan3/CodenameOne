@@ -2021,7 +2021,45 @@ JAVA_OBJECT java_lang_String_format___java_lang_String_java_lang_Object_1ARRAY_R
     finishedNativeAllocations();
     return out;
 #else
-    // TODO: Implement stub
-    return format; // Stub
+    JAVA_OBJECT builder = __NEW_INSTANCE_java_lang_StringBuilder(threadStateData);
+    int formatLength = java_lang_String_length___R_int(threadStateData, format);
+    JAVA_ARRAY argsArray = (JAVA_ARRAY)args;
+    JAVA_ARRAY_OBJECT* values = argsArray == JAVA_NULL ? JAVA_NULL : (JAVA_ARRAY_OBJECT*)argsArray->data;
+    int valuesLength = argsArray == JAVA_NULL ? 0 : argsArray->length;
+    int argIndex = 0;
+
+    for (int i = 0; i < formatLength; i++) {
+        JAVA_CHAR ch = java_lang_String_charAt___int_R_char(threadStateData, format, i);
+        if (ch != '%' || i == formatLength - 1) {
+            java_lang_StringBuilder_append___char_R_java_lang_StringBuilder(threadStateData, builder, ch);
+            continue;
+        }
+
+        JAVA_CHAR token = java_lang_String_charAt___int_R_char(threadStateData, format, i + 1);
+        i++;
+        if (token == '%') {
+            java_lang_StringBuilder_append___char_R_java_lang_StringBuilder(threadStateData, builder, '%');
+            continue;
+        }
+
+        if (argIndex >= valuesLength || values == JAVA_NULL) {
+            java_lang_StringBuilder_append___char_R_java_lang_StringBuilder(threadStateData, builder, '%');
+            java_lang_StringBuilder_append___char_R_java_lang_StringBuilder(threadStateData, builder, token);
+            continue;
+        }
+
+        JAVA_OBJECT value = values[argIndex++];
+        JAVA_OBJECT valueText = java_lang_String_valueOf___java_lang_Object_R_java_lang_String(threadStateData, value);
+        if (token == 'c') {
+            int valueTextLength = java_lang_String_length___R_int(threadStateData, valueText);
+            if (valueTextLength > 0) {
+                JAVA_CHAR out = java_lang_String_charAt___int_R_char(threadStateData, valueText, 0);
+                java_lang_StringBuilder_append___char_R_java_lang_StringBuilder(threadStateData, builder, out);
+            }
+        } else {
+            java_lang_StringBuilder_append___java_lang_String_R_java_lang_StringBuilder(threadStateData, builder, valueText);
+        }
+    }
+    return java_lang_StringBuilder_toString___R_java_lang_String(threadStateData, builder);
 #endif
 }

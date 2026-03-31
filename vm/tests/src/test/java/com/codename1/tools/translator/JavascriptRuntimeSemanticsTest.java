@@ -45,7 +45,7 @@ class JavascriptRuntimeSemanticsTest {
     void executesBroaderJavaApiCoverageInWorkerRuntime(CompilerHelper.CompilerConfig config) throws Exception {
         WorkerRunResult result = translateAndRunFixture(config, "JsJavaApiCoverageApp.java", "JsJavaApiCoverageApp");
 
-        assertEquals(255, result.result, "Translated runtime should execute the broader JavaAPI coverage fixture");
+        assertEquals(511, result.result, "Translated runtime should execute the broader JavaAPI coverage fixture");
         assertTrue(result.errorMessage == null || result.errorMessage.isEmpty(), "Worker should not emit an error message");
     }
 

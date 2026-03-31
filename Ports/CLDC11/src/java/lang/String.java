@@ -548,6 +548,10 @@ public final class String implements CharSequence, Comparable<String> {
     public CharSequence subSequence(int start, int end) {
         return substring(start, end);
     }
+    
+    public static String format(String format, Object... args) {
+        return null; //TODO codavaj!!
+    }
 
     /**
      * Checks if string contains the given char sequence.

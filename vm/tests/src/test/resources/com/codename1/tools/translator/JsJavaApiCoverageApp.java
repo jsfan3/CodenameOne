@@ -1,4 +1,5 @@
 import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 
 public class JsJavaApiCoverageApp {
@@ -34,9 +35,14 @@ public class JsJavaApiCoverageApp {
             mask |= 8;
         }
 
-        String formatted = String.format("%s-%d", "cn1", Integer.valueOf(7));
-        if ("cn1-7".equals(formatted)) {
+        String formatted = String.format("%s-%d-%c%%", "cn1", Integer.valueOf(7), Character.valueOf('A'));
+        if ("cn1-7-A%".equals(formatted)) {
             mask |= 16;
+        }
+        
+        byte[] utf8 = "cn1".getBytes(StandardCharsets.UTF_8);
+        if (utf8.length == 3 && utf8[0] == 'c' && utf8[1] == 'n' && utf8[2] == '1') {
+            mask |= 256;
         }
 
         int[] src = new int[] {1, 2, 3};
