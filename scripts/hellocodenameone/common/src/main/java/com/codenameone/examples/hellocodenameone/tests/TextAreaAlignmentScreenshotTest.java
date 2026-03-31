@@ -16,7 +16,7 @@ public class TextAreaAlignmentScreenshotTest extends BaseTest {
     private Font getSmallFont() {
         if (smallFont == null) {
             Font base = Font.createTrueTypeFont(Font.NATIVE_MAIN_REGULAR, Font.NATIVE_MAIN_REGULAR);
-            smallFont = base.derive(base.getPixelSize() * 0.65f, Font.STYLE_PLAIN);
+            smallFont = base.derive(base.getPixelSize() * 0.45f, Font.STYLE_PLAIN);
         }
         return smallFont;
     }
