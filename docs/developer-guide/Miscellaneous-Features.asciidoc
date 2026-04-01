@@ -78,6 +78,8 @@ This API is intentionally *best effort* and should only be used as a UX hint (fo
 
 On iOS, `isInCall()` is inferred from app interruption lifecycle events, which means it can report `true` for non-call interruptions (e.g. Control Center, app switching, permission sheets), and some call flows may still be missed.
 
+Because iOS toggles this flag during app lifecycle transitions, polling it with a `UITimer` can miss the interruption window entirely (timers are paused while the app is inactive, and the flag is reset when the app becomes active again). If you need to react, check it from lifecycle callbacks such as your app's `stop()`/`start()` flow instead of periodic polling.
+
 On Android, call detection is currently unsupported because robust detection would require invasive telephony permissions that are intentionally avoided.
 
 [source,java]
