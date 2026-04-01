@@ -24,20 +24,9 @@ package com.codename1.impl.javase;
 
 import com.codename1.location.Location;
 import java.awt.BorderLayout;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.awt.Component;
+import java.lang.reflect.Method;
 import java.util.prefs.Preferences;
-import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.concurrent.Worker;
-import javafx.embed.swing.JFXPanel;
-import javafx.scene.Scene;
-import javafx.scene.layout.StackPane;
-import javafx.scene.web.WebEngine;
-import javafx.scene.web.WebView;
 
 import javax.swing.*;
 
@@ -47,10 +36,7 @@ import javax.swing.*;
  */
 public class LocationSimulation extends JFrame {
 
-    private WebView webView;
-    private WebEngine webEngine;
-    private Timer timer;
-    private boolean isTextFieldFocused = false;
+    private final JcefMapBridge mapBridge = new JcefMapBridge();
     private double iLastLat = 0.1;
     private double iLastLon = 0.1;
     public static final int E_MeasUnit_Default = -1;
@@ -86,194 +72,98 @@ public class LocationSimulation extends JFrame {
 
         Preferences p = Preferences.userNodeForPackage(com.codename1.ui.Component.class);
         int startingZoom = p.getInt("lastZoom", 9);
-        final String htmlPage = "<!DOCTYPE html>\n"
+        double startLat = p.getDouble("lastGoodLat", 51.505d);
+        double startLon = p.getDouble("lastGoodLon", -0.09d);
+
+        mapPanel.setLayout(new BorderLayout());
+        String htmlPage = createMapHtml(startLat, startLon, startingZoom);
+        if (!mapBridge.loadInto(mapPanel, htmlPage)) {
+            JLabel warning = new JLabel("JCEF is unavailable. Map simulation disabled.");
+            warning.setHorizontalAlignment(SwingConstants.CENTER);
+            mapPanel.add(BorderLayout.CENTER, warning);
+        }
+    }
+
+    private static String createMapHtml(double lat, double lon, int zoom) {
+        return "<!DOCTYPE html>\n"
                 + "<html>\n"
                 + "  <head>\n"
                 + "    <title>Location Simulator</title>\n"
                 + "    <meta charset=\"utf-8\" />\n"
                 + "    <link rel=\"stylesheet\" href=\"https://unpkg.com/leaflet@1.7.1/dist/leaflet.css\" />\n"
                 + "    <script src=\"https://unpkg.com/leaflet@1.7.1/dist/leaflet.js\"></script>\n"
-                + "    <style>\n"
-                + "      #map {\n"
-                + "        height: 100vh;\n"
-                + "        width: 100%;\n"
-                + "      }\n"
-                + "    </style>\n"
+                + "    <style>#map {height: 100vh; width: 100%;}</style>\n"
                 + "  </head>\n"
                 + "  <body>\n"
                 + "    <div id=\"map\"></div>\n"
                 + "    <script>\n"
-                + "      var map = L.map('map').setView([51.505, -0.09], 13);\n"
-                + "      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {\n"
-                + "        attribution: '© OpenStreetMap contributors',\n"
-                + "        maxZoom: 19\n"
-                + "      }).addTo(map);\n"
-                + "\n"
-                + "      // Function to move the map to a new location\n"
-                + "      window.moveToLocation = function(lat, lon) {\n"
-                + "        map.setView([lat, lon], map.getZoom());\n"
-                + "      };\n"
-                + "\n"
-                + "      // Function to update JavaFX from JavaScript\n"
-                + "      document.updateJavaFX = function() {\n"
-                + "        var center = map.getCenter();\n"
-                + "        var bounds = map.getBounds();\n"
-                + "        var zoom = map.getZoom();\n"
-                + "\n"
-                + "        // Update global variables\n"
-                + "        window.currentCenter = [center.lat, center.lng];\n"
-                + "        window.currentZoom = zoom;\n"
-                + "        window.currentBounds = bounds.toBBoxString(); // Returns a string representation of the bounds\n"
-                + "\n"
-                + "        // Update the marker position\n"
-                + "        if (document.marker) {\n"
-                + "          document.marker.setLatLng(center);\n"
-                + "        } else {\n"
-                + "          document.marker = L.marker(center).addTo(map);\n"
-                + "        }\n"
-                + "\n"
-                + "        // Return the current map details as a JSON string\n"
-                + "        return JSON.stringify({\n"
-                + "          lat: center.lat,\n"
-                + "          lng: center.lng,\n"
-                + "          zoom: zoom\n"
-                + "        });\n"
-                + "      };\n"
-                + "\n"
-                + "      // Add event listeners to update currentCenter and currentZoom\n"
-                + "      map.on('move', function() {\n"
-                + "        document.updateJavaFX();\n"
-                + "      });\n"
-                + "\n"
-                + "      map.on('drag', function() {\n"
-                + "        document.updateJavaFX();\n"
-                + "      });\n"
-                + "\n"
-                + "      map.on('zoom', function() {\n"
-                + "        document.updateJavaFX();\n"
-                + "      });\n"
-                + "\n"
-                + "      // Initialize the marker\n"
-                + "      document.marker = L.marker([51.505, -0.09]).addTo(map);\n"
+                + "      var map = L.map('map').setView([" + lat + ", " + lon + "], " + zoom + ");\n"
+                + "      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution: '© OpenStreetMap contributors', maxZoom: 19}).addTo(map);\n"
+                + "      window.moveToLocation = function(lat, lon) { map.setView([lat, lon], map.getZoom()); };\n"
+                + "      L.marker([" + lat + ", " + lon + "]).addTo(map);\n"
                 + "    </script>\n"
                 + "  </body>\n"
                 + "</html>";
+    }
 
-        final JFXPanel webContainer = new JFXPanel();
-        mapPanel.setLayout(new BorderLayout());
-        mapPanel.add(BorderLayout.CENTER, webContainer);
+    static boolean isJcefPresent(ClassLoader classLoader) {
+        try {
+            classLoader.loadClass("org.cef.CefApp");
+            return true;
+        } catch (Throwable t) {
+            return false;
+        }
+    }
 
-        Platform.runLater(new Runnable() {
-            @Override
-            public void run() {
-                StackPane root = new StackPane();
-                webView = new WebView();
-                webEngine = webView.getEngine();
-                root.getChildren().add(webView);
-                webContainer.setScene(new Scene(root));
+    static boolean isJcefPresent() {
+        return isJcefPresent(LocationSimulation.class.getClassLoader());
+    }
 
-                // Load the HTML content
-                webEngine.loadContent(htmlPage, "text/html");
+    private static class JcefMapBridge {
+        private Object browser;
 
-                // Add a listener for the load state
-                webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Worker.State> obs,
-                                        Worker.State oldState,
-                                        Worker.State newState) {
-                        if (newState == javafx.concurrent.Worker.State.SUCCEEDED) {
-                            // Script is fully loaded, you can now call moveToLocation
-                            timer = new Timer();
-                            timer.scheduleAtFixedRate(new TimerTask() {
-                                @Override
-                                public void run() {
-                                    if (!isTextFieldFocused) {
-                                        Platform.runLater(new Runnable() {
-                                            @Override
-                                            public void run() {
-                                                try {
-                                                    Object result = webEngine.executeScript("document.updateJavaFX()");
-
-                                                    if (result != null) {
-                                                        // Parse the coordinates more safely
-                                                        String jsonStr = result.toString();
-                                                        // Remove the curly braces and quotes
-                                                        jsonStr = jsonStr.replaceAll("[{}\"]", "");
-
-                                                        // Create a map to store our values
-                                                        Map<String, Double> values = new HashMap<>();
-
-                                                        // Split by comma and process each key-value pair
-                                                        for (String pair : jsonStr.split(",")) {
-                                                            try {
-                                                                String[] keyValue = pair.trim().split(":");
-                                                                if (keyValue.length == 2) {  // Make sure we have both key and value
-                                                                    String key = keyValue[0].trim();
-                                                                    double value = Double.parseDouble(keyValue[1].trim());
-                                                                    values.put(key, value);
-                                                                }
-                                                            } catch (Exception e) {
-                                                                // Skip this pair if there's an error
-                                                                continue;
-                                                            }
-                                                        }
-
-                                                        // Only update if we have both latitude and longitude
-                                                        if (values.containsKey("lat") && values.containsKey("lng")) {
-                                                            double newLat = values.get("lat");
-                                                            double newLon = values.get("lng");
-                                                            int zoom = values.getOrDefault("zoom", 13.0).intValue();
-
-                                                            // Update preferences
-                                                            Preferences prefs = Preferences.userNodeForPackage(com.codename1.ui.Component.class);
-                                                            prefs.putInt("lastZoom", zoom);
-                                                            prefs.putDouble("lastGoodLat", newLat);
-                                                            prefs.putDouble("lastGoodLon", newLon);
-
-                                                            // Update the text fields
-                                                            latitude.setText(String.format("%.6f", newLat));
-                                                            longitude.setText(String.format("%.6f", newLon));
-                                                        }
-                                                    }
-                                                } catch (Exception e) {
-                                                    e.printStackTrace();
-                                                }
-                                            }
-                                        });
-                                    }
-                                }
-                            }, 1000, 1000);
-
-                            // Add focus listeners to the text fields
-                            latitude.addFocusListener(new java.awt.event.FocusListener() {
-                                @Override
-                                public void focusGained(java.awt.event.FocusEvent e) {
-                                    isTextFieldFocused = true;
-                                }
-
-                                @Override
-                                public void focusLost(java.awt.event.FocusEvent e) {
-                                    isTextFieldFocused = false;
-                                }
-                            });
-
-                            longitude.addFocusListener(new java.awt.event.FocusListener() {
-                                @Override
-                                public void focusGained(java.awt.event.FocusEvent e) {
-                                    isTextFieldFocused = true;
-                                }
-
-                                @Override
-                                public void focusLost(java.awt.event.FocusEvent e) {
-                                    isTextFieldFocused = false;
-                                }
-                            });
-                        }
-                    }
-
-                });
+        boolean loadInto(JPanel parent, String html) {
+            if (!isJcefPresent()) {
+                return false;
             }
-        });
+            try {
+                Class<?> cefAppClass = Class.forName("org.cef.CefApp");
+                Class<?> cefSettingsClass = Class.forName("org.cef.CefSettings");
+                Object settings = cefSettingsClass.newInstance();
+
+                Object state = cefAppClass.getMethod("getState").invoke(null);
+                Object initialized = Enum.valueOf((Class<Enum>) Class.forName("org.cef.CefApp$CefAppState"), "INITIALIZED");
+
+                Object app;
+                if (!state.equals(initialized)) {
+                    app = cefAppClass.getMethod("getInstance", String[].class, cefSettingsClass).invoke(null, new Object[]{new String[0], settings});
+                } else {
+                    app = cefAppClass.getMethod("getInstance", String[].class).invoke(null, new Object[]{new String[0]});
+                }
+
+                Object client = app.getClass().getMethod("createClient").invoke(app);
+                browser = client.getClass().getMethod("createBrowser", String.class, boolean.class, boolean.class).invoke(client, "about:blank", false, false);
+                Component ui = (Component) browser.getClass().getMethod("getUIComponent").invoke(browser);
+                parent.add(BorderLayout.CENTER, ui);
+                loadHtml(html);
+                return true;
+            } catch (Throwable t) {
+                browser = null;
+                return false;
+            }
+        }
+
+        void loadHtml(String html) throws Exception {
+            if (browser == null) return;
+            Method loadString = browser.getClass().getMethod("loadString", String.class, String.class);
+            loadString.invoke(browser, html, "https://localhost/");
+        }
+
+        void executeJavaScript(String script) throws Exception {
+            if (browser == null) return;
+            Method execute = browser.getClass().getMethod("executeJavaScript", String.class, String.class, int.class);
+            execute.invoke(browser, script, "https://localhost/", 0);
+        }
     }
 
     private double getTextVal(String aText) {
@@ -592,17 +482,18 @@ public class LocationSimulation extends JFrame {
             final Double la = new Double(lat);
             final Double lo = new Double(lon);
 
-            Platform.runLater(new Runnable() {
-
-                public void run() {
-                    Preferences p = Preferences.userNodeForPackage(com.codename1.ui.Component.class);
-                    p.putFloat("accuracy", getAccuracy());
-                    p.putFloat("velocity", getVelocity());
-                    p.putDouble("Altitude", getAltitude());
-                    p.putFloat("direction", getDirection());
-                    webEngine.executeScript("moveToLocation(" + la.toString() + "," + lo.toString() + ");");
-                }
-            });
+            Preferences p = Preferences.userNodeForPackage(com.codename1.ui.Component.class);
+            p.putFloat("accuracy", getAccuracy());
+            p.putFloat("velocity", getVelocity());
+            p.putDouble("Altitude", getAltitude());
+            p.putFloat("direction", getDirection());
+            p.putDouble("lastGoodLat", la.doubleValue());
+            p.putDouble("lastGoodLon", lo.doubleValue());
+            try {
+                mapBridge.executeJavaScript("moveToLocation(" + la.toString() + "," + lo.toString() + ");");
+            } catch (Exception ex) {
+                // Ignore map script failures to avoid blocking location simulation updates.
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
