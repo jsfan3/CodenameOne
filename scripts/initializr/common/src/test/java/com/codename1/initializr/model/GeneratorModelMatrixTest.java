@@ -192,8 +192,17 @@ public class GeneratorModelMatrixTest extends AbstractTest {
         assertCommonPom(entries, template, packageName, mainClassName, false);
         assertSettings(entries, template, packageName, mainClassName, false);
         assertMainSourceFile(entries, template, packageName, mainClassName, false);
+        assertThemeDefaults(entries, template);
         assertLocalizationBundles(entries, template, false);
         assertNoTemplatePlaceholders(entries, template);
+    }
+
+    private void assertThemeDefaults(Map<String, byte[]> entries, Template template) {
+        if (template != Template.BAREBONES && template != Template.KOTLIN) {
+            return;
+        }
+        String themeCss = getText(entries, "common/src/main/css/theme.css");
+        assertContains(themeCss, "useLargerTextScaleBool: true;", "Barebones templates should default useLargerTextScaleBool to true");
     }
 
     private static byte[] createProjectZip(IDE ide, Template template, String appName, String packageName) throws IOException {

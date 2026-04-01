@@ -201,6 +201,7 @@ public class GeneratorModel {
             content = injectLocalizationBootstrap(targetPath, content);
         }
         if (isBareTemplate() && "common/src/main/css/theme.css".equals(targetPath)) {
+            content = ensureDefaultLargeTextScale(content);
             content += buildThemeCss();
         }
         if ("common/pom.xml".equals(targetPath)) {
@@ -429,6 +430,27 @@ public class GeneratorModel {
 
     private boolean isBareTemplate() {
         return template == Template.BAREBONES || template == Template.KOTLIN;
+    }
+
+    private static String ensureDefaultLargeTextScale(String css) {
+        if (css.indexOf("useLargerTextScaleBool") >= 0) {
+            return css;
+        }
+        int constantsStart = css.indexOf("#Constants");
+        if (constantsStart < 0) {
+            return css + "\n\n#Constants {\n    useLargerTextScaleBool: true;\n}\n";
+        }
+        int blockStart = css.indexOf('{', constantsStart);
+        if (blockStart < 0) {
+            return css;
+        }
+        int blockEnd = css.indexOf('}', blockStart);
+        if (blockEnd < 0) {
+            return css;
+        }
+        return css.substring(0, blockEnd)
+                + "    useLargerTextScaleBool: true;\n"
+                + css.substring(blockEnd);
     }
 
     private String buildReadmeMarkdown() {
