@@ -83,22 +83,6 @@ body.dark.cn1-homepage {
     padding-top: 40px;
 }
 
-.cn1-homepage .header::before {
-    content: "Open Source & Free";
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 40px;
-    background: var(--cn1-home-strip-bg);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--cn1-home-strip-text);
-}
-
 .cn1-homepage .nav {
     display: flex;
     flex-wrap: nowrap;
@@ -267,8 +251,7 @@ body:not(.dark) .cn1-brand-logo {
     padding-top: 40px;
 }
 
-.cn1-header::before {
-    content: "Open Source & Free";
+.cn1-top-strip {
     position: fixed;
     top: 0;
     left: 0;
@@ -278,9 +261,25 @@ body:not(.dark) .cn1-brand-logo {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.cn1-top-strip__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
     font-size: 18px;
     font-weight: 700;
     color: var(--cn1-home-strip-text);
+    text-decoration: none;
+}
+
+.cn1-top-strip__link:hover,
+.cn1-top-strip__link:focus-visible {
+    text-decoration: underline;
+}
+
+.cn1-top-strip__link i {
+    font-size: 20px;
 }
 
 .cn1-header .nav {
@@ -1540,12 +1539,12 @@ body:not(.dark) .cn1-theme-toggle-btn {
 }
 
 @media (max-width: 1400px) {
-    .cn1-homepage .header::before {
+    .cn1-top-strip__link {
         font-size: 18px;
     }
 
-    .cn1-header::before {
-        font-size: 18px;
+    .cn1-top-strip__link i {
+        font-size: 20px;
     }
 
     .cn1-homepage .logo a {

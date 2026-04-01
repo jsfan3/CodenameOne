@@ -40,6 +40,12 @@
 {{- end }}
 
 <header class="header cn1-header">
+    <div class="cn1-top-strip">
+        <a class="cn1-top-strip__link" href="https://github.com/codenameone/CodenameOne" target="_blank" rel="noopener noreferrer">
+            <i class="fab fa-github" aria-hidden="true"></i>
+            <span>Open Source &amp; Free</span>
+        </a>
+    </div>
     <nav class="nav cn1-nav">
         <div class="logo">
             {{- $label_text := (site.Params.label.text | default site.Title) }}
