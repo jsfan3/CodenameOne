@@ -108,7 +108,7 @@ public class LocationSimulation extends JFrame {
 
     static boolean isJcefPresent(ClassLoader classLoader) {
         try {
-            Class.forName("org.cef.CefApp", false, classLoader);
+            classLoader.loadClass("org.cef.CefApp");
             return true;
         } catch (Throwable t) {
             return false;
