@@ -353,6 +353,15 @@ public interface Media {
     /// Write-only variable that can be used with getVariable() to set whether this
     /// video should include embedded native controls.
     String VARIABLE_NATIVE_CONTRLOLS_EMBEDDED = "nativeControlsVisible";
+    
+    /**
+     * Optional boolean flag to enable an Android-specific workaround for flaky
+     * black-frame previews after {@link #setTime(int)} on paused video.
+     * <p>The default is {@code false}. When enabled, Android may perform an
+     * additional internal refresh seek to force a frame redraw without changing
+     * behaviour on other platforms.
+     */
+    String VARIABLE_ANDROID_SEEK_PREVIEW_WORKAROUND = "androidSeekPreviewWorkaround";
 
     /// Starts playing or recording the media file
     void play();

@@ -7641,6 +7641,7 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         private final EventDispatcher stateChangeListeners = new EventDispatcher();
         private PlayRequest pendingPlayRequest;
         private PauseRequest pendingPauseRequest;
+        private boolean androidSeekPreviewWorkaroundEnabled;
 
         @Override
         public State getState() {
@@ -7960,7 +7961,29 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         @Override
         public void setTime(int time) {
             if(nativeVideo != null){
-                nativeVideo.seekTo(time);
+                final int seekTime = time;
+                activity.runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (nativeVideo == null) {
+                            return;
+                        }
+                        nativeVideo.seekTo(seekTime);
+                        if (androidSeekPreviewWorkaroundEnabled && !nativeVideo.isPlaying()) {
+                            final int refreshSeekTime = Math.max(0, seekTime - 1);
+                            nativeVideo.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    if (nativeVideo != null && !nativeVideo.isPlaying()) {
+                                        nativeVideo.seekTo(refreshSeekTime);
+                                        nativeVideo.seekTo(seekTime);
+                                        nativeVideo.invalidate();
+                                    }
+                                }
+                            }, 60);
+                        }
+                    }
+                });
             }
         }
 
@@ -8118,6 +8141,10 @@ public class AndroidImplementation extends CodenameOneImplementation implements 
         public void setVariable(String key, Object value) {
             if (nativeVideo != null && Media.VARIABLE_NATIVE_CONTRLOLS_EMBEDDED.equals(key) && value instanceof Boolean) {
                 setNativeController((Boolean)value);
+                return;
+            }
+            if (Media.VARIABLE_ANDROID_SEEK_PREVIEW_WORKAROUND.equals(key) && value instanceof Boolean) {
+                androidSeekPreviewWorkaroundEnabled = ((Boolean)value).booleanValue();
             }
         }
 
