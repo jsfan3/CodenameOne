@@ -772,10 +772,6 @@ public class Validator {
         /// Handles the glasspane work just to save a new class object (smaller code)
         @Override
         public void paint(Graphics g, Rectangle rect) {
-            Form currentForm = Display.getInstance().getCurrent();
-            if (hasVisibleInteractionDialog(currentForm)) {
-                return;
-            }
             for (Component c : constraintList.keySet()) {
                 if (!isValid(c)) {
                     if (c instanceof InputComponent && ((InputComponent) c).isOnTopMode()) {
@@ -840,28 +836,5 @@ public class Validator {
             return false;
         }
 
-        private boolean hasVisibleInteractionDialog(Form form) {
-            if (form == null) {
-                return false;
-            }
-            return containsVisibleInteractionDialog(form.getLayeredPane(InteractionDialog.class, true)) ||
-                    containsVisibleInteractionDialog(form.getFormLayeredPane(InteractionDialog.class, true));
-        }
-
-        private boolean containsVisibleInteractionDialog(Container container) {
-            if (container == null || !container.isVisible()) {
-                return false;
-            }
-            for (int i = 0; i < container.getComponentCount(); i++) {
-                Component child = container.getComponentAt(i);
-                if (child instanceof InteractionDialog && child.isVisible()) {
-                    return true;
-                }
-                if (child instanceof Container && containsVisibleInteractionDialog((Container) child)) {
-                    return true;
-                }
-            }
-            return false;
-        }
     }
 }
