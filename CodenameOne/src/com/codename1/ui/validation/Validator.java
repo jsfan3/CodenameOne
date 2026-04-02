@@ -821,7 +821,7 @@ public class Validator {
             if (container == null || !container.isVisible()) {
                 return false;
             }
-            if (container.visibleBoundsContains(x, y) && !container.isFocusable()) {
+            if (container.visibleBoundsContains(x, y)) {
                 for (int i = container.getComponentCount() - 1; i >= 0; i--) {
                     Component child = container.getComponentAt(i);
                     if (child instanceof Container && isPointCoveredByContainer(x, y, (Container) child)) {
