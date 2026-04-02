@@ -784,6 +784,11 @@ public class Validator {
                     xpos += Math.round(width * validationEmblemPositionX);
                     ypos += Math.round(height * validationEmblemPositionY);
 
+                    Form currentForm = c.getComponentForm();
+                    if (isPointCoveredByFormLayer(xpos, ypos, currentForm)) {
+                        continue;
+                    }
+
                     Container parent = c.getParent();
                     visibleRect = parent.getVisibleBounds(visibleRect);
                     Container grandParent = parent.getParent();
@@ -802,6 +807,31 @@ public class Validator {
                     g.setClip(originalClip);
                 }
             }
+        }
+
+        boolean isPointCoveredByFormLayer(int x, int y, Form form) {
+            if (form == null) {
+                return false;
+            }
+            return isPointCoveredByContainer(x, y, form.getLayeredPane());
+        }
+
+        private boolean isPointCoveredByContainer(int x, int y, Container container) {
+            if (container == null || !container.isVisible()) {
+                return false;
+            }
+            if (container.visibleBoundsContains(x, y) && !container.isFocusable()) {
+                for (int i = container.getComponentCount() - 1; i >= 0; i--) {
+                    Component child = container.getComponentAt(i);
+                    if (child instanceof Container && isPointCoveredByContainer(x, y, (Container) child)) {
+                        return true;
+                    }
+                    if (child.isVisible() && child.visibleBoundsContains(x, y)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
     }
 }

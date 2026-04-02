@@ -4,6 +4,7 @@ import com.codename1.junit.FormTest;
 import com.codename1.junit.UITestBase;
 import com.codename1.ui.Button;
 import com.codename1.ui.Component;
+import com.codename1.ui.Container;
 import com.codename1.ui.Form;
 import com.codename1.ui.Label;
 import com.codename1.ui.TextComponent;
@@ -178,6 +179,30 @@ class ValidatorTest extends UITestBase {
         if (scrollable != null) {
             scrollable.scrollRectToVisible(10, 0, 10, 10, ta);
         }
+    }
+
+
+
+    @FormTest
+    void testValidationEmblemSkippedWhenCoveredByLayeredPane() {
+        Form form = new Form(new BoxLayout(BoxLayout.Y_AXIS));
+        TextField tf = new TextField();
+        form.add(tf);
+        form.show();
+
+        Validator validator = new Validator();
+        Validator.ComponentListener listener = validator.new ComponentListener(tf);
+
+        Container layeredPane = form.getLayeredPane();
+        Label overlay = new Label("Overlay");
+        overlay.setX(20);
+        overlay.setY(20);
+        overlay.setWidth(80);
+        overlay.setHeight(40);
+        layeredPane.add(overlay);
+
+        assertTrue(listener.isPointCoveredByFormLayer(40, 40, form));
+        assertFalse(listener.isPointCoveredByFormLayer(5, 5, form));
     }
 
     @FormTest
