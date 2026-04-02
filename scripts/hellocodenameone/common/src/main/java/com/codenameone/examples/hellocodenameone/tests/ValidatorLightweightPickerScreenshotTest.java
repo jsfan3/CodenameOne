@@ -15,7 +15,7 @@ public class ValidatorLightweightPickerScreenshotTest extends BaseTest {
 
     @Override
     public boolean runTest() {
-        Form form = new Form("Validator + Picker", BoxLayout.y());
+        Form form = createForm("Validator + Picker", BoxLayout.y(), "ValidatorLightweightPicker");
 
         PickerComponent birthDate = PickerComponent.createDate(new Date()).label("Birthdate");
         picker = birthDate.getPicker();
