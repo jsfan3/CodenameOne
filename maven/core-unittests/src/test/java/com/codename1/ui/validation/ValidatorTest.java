@@ -12,6 +12,7 @@ import com.codename1.ui.Label;
 import com.codename1.ui.TextComponent;
 import com.codename1.ui.TextField;
 import com.codename1.ui.TextArea;
+import com.codename1.ui.geom.Rectangle;
 import com.codename1.ui.layouts.BoxLayout;
 import com.codename1.ui.plaf.UIManager;
 
@@ -243,7 +244,7 @@ class ValidatorTest extends UITestBase {
 
         Image canvas = Image.createImage(form.getWidth(), form.getHeight(), 0xffffff);
         Graphics g = canvas.getGraphics();
-        form.getGlassPane().paint(g, form.getBounds());
+        form.getGlassPane().paint(g, new Rectangle(0, 0, form.getWidth(), form.getHeight()));
 
         int firstX = first.getAbsoluteX() + first.getWidth();
         int firstY = first.getAbsoluteY() + first.getHeight() / 2;
@@ -255,7 +256,7 @@ class ValidatorTest extends UITestBase {
     private boolean hasColorNear(Image img, int x, int y, int rgb) {
         int width = img.getWidth();
         int height = img.getHeight();
-        int[] pixel = new int[1];
+        int[] pixels = img.getRGB();
         for (int dy = -6; dy <= 6; dy++) {
             int py = y + dy;
             if (py < 0 || py >= height) {
@@ -266,8 +267,7 @@ class ValidatorTest extends UITestBase {
                 if (px < 0 || px >= width) {
                     continue;
                 }
-                img.getRGB(pixel, 0, px, py, 1, 1);
-                if ((pixel[0] & 0x00ffffff) == rgb) {
+                if ((pixels[py * width + px] & 0x00ffffff) == rgb) {
                     return true;
                 }
             }
