@@ -227,6 +227,7 @@ class ValidatorTest extends UITestBase {
         validator.setValidationFailedEmblem(emblem);
         validator.addConstraint(first, new LengthConstraint(5, "Too short"));
         validator.addConstraint(second, new LengthConstraint(5, "Too short"));
+        form.setGlassPane(validator.new ComponentListener(null));
 
         first.requestFocus();
         second.requestFocus();
