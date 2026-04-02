@@ -2,10 +2,11 @@ package com.codenameone.examples.hellocodenameone.tests;
 
 import com.codename1.ui.Form;
 import com.codename1.ui.PickerComponent;
+import com.codename1.ui.TextField;
 import com.codename1.ui.layouts.BoxLayout;
 import com.codename1.ui.spinner.Picker;
 import com.codename1.ui.util.UITimer;
-import com.codename1.ui.validation.Constraint;
+import com.codename1.ui.validation.LengthConstraint;
 import com.codename1.ui.validation.Validator;
 
 import java.util.Date;
@@ -20,23 +21,19 @@ public class ValidatorLightweightPickerScreenshotTest extends BaseTest {
         PickerComponent birthDate = PickerComponent.createDate(new Date()).label("Birthdate");
         picker = birthDate.getPicker();
         picker.setUseLightweightPopup(true);
+        form.add(birthDate);
 
         Validator validator = new Validator();
         validator.setValidationFailureHighlightMode(Validator.HighlightMode.EMBLEM);
-        validator.setValidationEmblemPositionX(0f);
-        validator.addConstraint(birthDate, new Constraint() {
-            @Override
-            public boolean isValid(Object value) {
-                return false;
-            }
+        validator.setValidationEmblemPositionX(1f);
 
-            @Override
-            public String getDefaultFailMessage() {
-                return "Validation marker should not overlap spinner";
-            }
-        });
+        for (int i = 1; i <= 12; i++) {
+            TextField tf = new TextField();
+            tf.setHint("Field " + i);
+            form.add(tf);
+            validator.addConstraint(tf, new LengthConstraint(5, "Must be at least 5 chars"));
+        }
 
-        form.add(birthDate);
         form.show();
         return true;
     }
