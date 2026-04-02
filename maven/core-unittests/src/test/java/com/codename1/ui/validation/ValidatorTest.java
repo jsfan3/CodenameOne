@@ -225,8 +225,8 @@ class ValidatorTest extends UITestBase {
         dialog.showPopupDialog(tf);
         flushSerialCalls();
 
-        int x = dialog.getAbsoluteX() + Math.max(1, dialog.getWidth() / 2);
-        int y = dialog.getAbsoluteY() + Math.max(1, dialog.getHeight() / 2);
+        int x = overlay.getAbsoluteX() + Math.max(1, overlay.getWidth() / 2);
+        int y = overlay.getAbsoluteY() + Math.max(1, overlay.getHeight() / 2);
         assertTrue(listener.isPointCoveredByFormLayer(x, y, form));
         dialog.dispose();
     }
