@@ -216,15 +216,17 @@ class ValidatorTest extends UITestBase {
         Validator validator = new Validator();
         Validator.ComponentListener listener = validator.new ComponentListener(tf);
 
-        Container interactionLayer = form.getFormLayeredPane(InteractionDialog.class, true);
+        InteractionDialog dialog = new InteractionDialog();
         Label overlay = new Label("Overlay");
-        overlay.setX(20);
-        overlay.setY(20);
         overlay.setWidth(80);
         overlay.setHeight(40);
-        interactionLayer.add(overlay);
+        dialog.add(overlay);
+        dialog.showPopupDialog(tf);
 
-        assertTrue(listener.isPointCoveredByFormLayer(40, 40, form));
+        int x = dialog.getAbsoluteX() + Math.max(1, dialog.getWidth() / 2);
+        int y = dialog.getAbsoluteY() + Math.max(1, dialog.getHeight() / 2);
+        assertTrue(listener.isPointCoveredByFormLayer(x, y, form));
+        dialog.dispose();
     }
 
     @FormTest
