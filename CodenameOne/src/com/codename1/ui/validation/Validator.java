@@ -814,6 +814,7 @@ public class Validator {
                 return false;
             }
             return isPointCoveredByContainer(x, y, form.getLayeredPane()) ||
+                    isPointCoveredByContainer(x, y, form.getLayeredPane(InteractionDialog.class, true)) ||
                     isPointCoveredByContainer(x, y, form.getFormLayeredPane(InteractionDialog.class, true));
         }
 
