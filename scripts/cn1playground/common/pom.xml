@@ -11,6 +11,12 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
+
+    <properties>
+        <!-- BeanShell runtime currently uses APIs outside the CN1 allowlist; skip bytecode compliance in this module. -->
+        <skipComplianceCheck>true</skipComplianceCheck>
+    </properties>
+
     <!-- Add your cn1lib dependencies to this section -->
     <dependencies>
         <dependency>

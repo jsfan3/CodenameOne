@@ -1141,14 +1141,18 @@ public class NameSpace
      *         serialization. Don't serialize non-serializable objects. */
     private synchronized void writeObject(final ObjectOutputStream s)
             throws IOException {
-        throw new java.io.NotSerializableException("bsh.NameSpace serialization is disabled in CN1 playground runtime");
+        // clear name resolvers... don't know if this is necessary.
+        this.names.clear();
+        s.defaultWriteObject();
     }
     /** Re-initialize transient members.
      * @param in the serializer
      * @throws IOException mandatory throwing exception
      * @throws ClassNotFoundException mandatory throwing exception */
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        throw new java.io.NotSerializableException("bsh.NameSpace serialization is disabled in CN1 playground runtime");
+        in.defaultReadObject();
+
+        this.classCache = new HashMap<>();
     }
     /** Invoke a method in this namespace with the specified args and
      * interpreter reference. No caller information or call stack is required.
