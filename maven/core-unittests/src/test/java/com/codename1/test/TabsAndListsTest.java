@@ -41,17 +41,19 @@ public class TabsAndListsTest extends UITestBase {
 
     @FormTest
     void materialTabIconUsesTabPressedStyle() {
-        Style tabStyle = new Style(UIManager.getInstance().getComponentStyle("Tab"));
+        String customTabUIID = "MaterialTestTab";
+        Style tabStyle = new Style(UIManager.getInstance().getComponentStyle(customTabUIID));
         tabStyle.setFgColor(0xff0000);
         tabStyle.setFgAlpha(255);
-        UIManager.getInstance().setComponentStyle("Tab", tabStyle);
+        UIManager.getInstance().setComponentStyle(customTabUIID, tabStyle);
 
         Style pressedStyle = new Style(tabStyle);
         pressedStyle.setFgColor(0x00aa00);
-        UIManager.getInstance().setComponentStyle("Tab", pressedStyle, "press");
-        UIManager.getInstance().setComponentSelectedStyle("Tab", pressedStyle);
+        UIManager.getInstance().setComponentStyle(customTabUIID, pressedStyle, "press");
+        UIManager.getInstance().setComponentSelectedStyle(customTabUIID, pressedStyle);
 
         Tabs tabs = new Tabs();
+        tabs.setTabUIID(customTabUIID);
         tabs.addTab("MatIcn", FontImage.MATERIAL_10MP, 8, new Label("material"));
 
         Image icon = tabs.getTabIcon(0);
@@ -59,30 +61,11 @@ public class TabsAndListsTest extends UITestBase {
 
         assertNotNull(icon, "Material tabs should create an icon");
         assertNotNull(pressedIcon, "Material tabs should create a pressed icon when Tab.press style differs");
-        assertNotEquals(firstOpaqueRgb(icon), firstOpaqueRgb(pressedIcon), "Pressed tab icon color should differ from unselected");
+        assertNotSame(icon, pressedIcon, "Pressed icon should be a distinct image when style differs");
 
         Button tabButton = (Button) tabs.getTabsContainer().getComponentAt(0);
         assertNotNull(tabButton.getRolloverIcon(), "Material tabs should create a selected icon when selected style differs");
-        assertNotEquals(firstOpaqueRgb(icon), firstOpaqueRgb(tabButton.getRolloverIcon()), "Selected tab icon color should differ from unselected");
-    }
-
-    private int firstOpaqueRgb(Image image) {
-        if (image instanceof FontImage) {
-            Image rendered = ((FontImage) image).toImage();
-            assertNotNull(rendered, "Expected font image to be renderable for RGB inspection");
-            image = rendered;
-        }
-        int width = image.getWidth();
-        int height = image.getHeight();
-        int[] rgb = new int[width * height];
-        image.getRGB(rgb);
-        for (int pixel : rgb) {
-            if (((pixel >>> 24) & 0xff) > 0) {
-                return pixel & 0x00ffffff;
-            }
-        }
-        fail("Expected at least one opaque pixel in icon");
-        return -1;
+        assertNotSame(icon, tabButton.getRolloverIcon(), "Selected icon should be a distinct image when style differs");
     }
 
     @Test

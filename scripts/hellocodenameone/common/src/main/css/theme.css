@@ -61,3 +61,12 @@ GraphicsComponent {
     padding: 0px;
     margin: 1mm;
 }
+
+TabsColorSync {
+    color: red;
+}
+
+TabsColorSync.sel,
+TabsColorSync.pressed {
+    color: green;
+}
