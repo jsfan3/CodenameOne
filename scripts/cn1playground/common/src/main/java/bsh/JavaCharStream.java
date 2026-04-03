@@ -291,6 +291,20 @@ class JavaCharStream extends AbstractCharStream
     super.reInit (startline, startcolumn, buffersize);
   }
   
+
+  private static java.io.Reader readerFor(final java.io.InputStream dstream,
+                                          final java.nio.charset.Charset encoding)
+  {
+    if (encoding == null) {
+      return new java.io.InputStreamReader(dstream);
+    }
+    try {
+      return new java.io.InputStreamReader(dstream, encoding.name());
+    } catch (final java.io.UnsupportedEncodingException ex) {
+      return new java.io.InputStreamReader(dstream);
+    }
+  }
+
   /** Constructor. */
   public JavaCharStream(final java.io.InputStream dstream, 
                         final java.nio.charset.Charset encoding, 
@@ -298,7 +312,7 @@ class JavaCharStream extends AbstractCharStream
                         final int startcolumn, 
                         final int buffersize)
   {
-    this(new java.io.InputStreamReader(dstream, encoding), startline, startcolumn, buffersize);
+    this(readerFor(dstream, encoding), startline, startcolumn, buffersize);
   }
 
   /** Constructor. */
@@ -340,7 +354,7 @@ class JavaCharStream extends AbstractCharStream
                      final int startcolumn,
                      final int buffersize)
   {
-    reInit(new java.io.InputStreamReader(dstream, encoding), startline, startcolumn, buffersize);
+    reInit(readerFor(dstream, encoding), startline, startcolumn, buffersize);
   }
   
   @Override

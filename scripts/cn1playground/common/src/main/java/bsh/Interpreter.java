@@ -1122,11 +1122,7 @@ public class Interpreter
     private void readObject(ObjectInputStream stream)
         throws IOException, ClassNotFoundException
     {
-        stream.defaultReadObject();
-
-        // set transient fields
-        setOut( System.out );
-        setErr( System.err );
+        throw new java.io.NotSerializableException("bsh.Interpreter serialization is disabled in CN1 playground runtime");
     }
 
     /**

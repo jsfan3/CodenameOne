@@ -331,12 +331,7 @@ class LHS implements ParserConstants, Serializable {
      * @param s serializer
      * @throws IOException mandatory throwing exception */
     private synchronized void writeObject(final ObjectOutputStream s) throws IOException {
-        if ( null != field ) {
-            this.object = field.getDeclaringClass();
-            this.varName = field.getName();
-            this.field = null;
-        }
-        s.defaultWriteObject();
+        throw new java.io.NotSerializableException("bsh.LHS serialization is disabled in CN1 playground runtime");
     }
 
     /** Fetch field removed from serializer.
@@ -344,12 +339,6 @@ class LHS implements ParserConstants, Serializable {
      * @throws IOException mandatory throwing exception
      * @throws ClassNotFoundException mandatory throwing exception  */
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        if ( null == this.object )
-            return;
-        Class<?> cls = this.object.getClass();
-        if ( this.object instanceof Class )
-            cls = (Class<?>) this.object;
-        this.field = BshClassManager.memberCache.get(cls).findField(varName);
+        throw new java.io.NotSerializableException("bsh.LHS serialization is disabled in CN1 playground runtime");
     }
 }
