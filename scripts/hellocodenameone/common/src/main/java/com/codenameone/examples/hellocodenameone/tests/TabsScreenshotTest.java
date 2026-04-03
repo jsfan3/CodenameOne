@@ -21,7 +21,7 @@ public class TabsScreenshotTest extends BaseTest {
         tabs.addTab("MatIcn", FontImage.MATERIAL_10MP, 8, new Button("Tab with material icon"));
         tabs.addTab("ImgIcn", FontImage.MATERIAL_HOME, 8, new Button("Tab with explicit selected icon"));
         tabs.addTab("Txt", new Button("Tab without icon"));
-        tabs.setTabSelectedIcon(1, FontImage.createMaterial(FontImage.MATERIAL_HOME, tabs.getTabsContainer().getComponentAt(1).getPressedStyle(), 8));
+        tabs.setTabSelectedIcon(1, FontImage.createMaterial(FontImage.MATERIAL_HOME, tabs.getTabsContainer().getComponentAt(1).getSelectedStyle(), 8));
         tabs.setSelectedIndex(1);
 
         content.add(BorderLayout.CENTER, tabs);
@@ -40,5 +40,9 @@ public class TabsScreenshotTest extends BaseTest {
         Style pressed = new Style(tab);
         pressed.setFgColor(0x00aa00);
         manager.setComponentStyle("Tab", pressed, "press");
+
+        Style selected = new Style(tab);
+        selected.setFgColor(0x00aa00);
+        manager.setComponentSelectedStyle("Tab", selected);
     }
 }

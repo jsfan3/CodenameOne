@@ -4,11 +4,12 @@ import com.codename1.junit.FormTest;
 import com.codename1.junit.UITestBase;
 import com.codename1.ui.ComboBox;
 import com.codename1.ui.Component;
+import com.codename1.ui.FontImage;
 import com.codename1.ui.Image;
 import com.codename1.ui.Label;
 import com.codename1.ui.List;
 import com.codename1.ui.Tabs;
-import com.codename1.ui.FontImage;
+import com.codename1.ui.Button;
 import com.codename1.ui.plaf.Style;
 import com.codename1.ui.plaf.UIManager;
 import com.codename1.ui.list.DefaultListModel;
@@ -48,6 +49,7 @@ public class TabsAndListsTest extends UITestBase {
         Style pressedStyle = new Style(tabStyle);
         pressedStyle.setFgColor(0x00aa00);
         UIManager.getInstance().setComponentStyle("Tab", pressedStyle, "press");
+        UIManager.getInstance().setComponentSelectedStyle("Tab", pressedStyle);
 
         Tabs tabs = new Tabs();
         tabs.addTab("MatIcn", FontImage.MATERIAL_10MP, 8, new Label("material"));
@@ -58,9 +60,18 @@ public class TabsAndListsTest extends UITestBase {
         assertNotNull(icon, "Material tabs should create an icon");
         assertNotNull(pressedIcon, "Material tabs should create a pressed icon when Tab.press style differs");
         assertNotEquals(firstOpaqueRgb(icon), firstOpaqueRgb(pressedIcon), "Pressed tab icon color should differ from unselected");
+
+        Button tabButton = (Button) tabs.getTabsContainer().getComponentAt(0);
+        assertNotNull(tabButton.getRolloverIcon(), "Material tabs should create a selected icon when selected style differs");
+        assertNotEquals(firstOpaqueRgb(icon), firstOpaqueRgb(tabButton.getRolloverIcon()), "Selected tab icon color should differ from unselected");
     }
 
     private int firstOpaqueRgb(Image image) {
+        if (image instanceof FontImage) {
+            Image rendered = ((FontImage) image).toImage();
+            assertNotNull(rendered, "Expected font image to be renderable for RGB inspection");
+            image = rendered;
+        }
         int width = image.getWidth();
         int height = image.getHeight();
         int[] rgb = new int[width * height];
