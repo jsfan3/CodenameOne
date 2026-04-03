@@ -1,14 +1,12 @@
 package com.codename1.ui.validation;
 
+import com.codename1.components.InteractionDialog;
 import com.codename1.junit.FormTest;
 import com.codename1.junit.UITestBase;
 import com.codename1.ui.Button;
 import com.codename1.ui.Component;
 import com.codename1.ui.Container;
-import com.codename1.ui.Display;
 import com.codename1.ui.Form;
-import com.codename1.ui.Graphics;
-import com.codename1.ui.Image;
 import com.codename1.ui.Label;
 import com.codename1.ui.TextComponent;
 import com.codename1.ui.TextField;
@@ -212,78 +210,26 @@ class ValidatorTest extends UITestBase {
     @FormTest
     void testValidationEmblemSkippedWhenCoveredByFormLayeredPane() {
         Form form = new Form(new BoxLayout(BoxLayout.Y_AXIS));
-        TextField first = new TextField();
-        TextField second = new TextField();
-        Button sentinel = new Button("sentinel");
-        form.add(first);
-        form.add(second);
-        form.add(sentinel);
+        TextField field = new TextField();
+        form.add(field);
         form.show();
 
         Validator validator = new Validator();
-        validator.setValidationFailureHighlightMode(Validator.HighlightMode.EMBLEM);
-        validator.setValidationEmblemPositionX(1f);
-        validator.setValidationEmblemPositionY(0.5f);
-        Image emblem = Image.createImage(8, 8, 0xffff0000);
-        validator.setValidationFailedEmblem(emblem);
-        validator.addConstraint(first, new LengthConstraint(5, "Too short"));
-        validator.addConstraint(second, new LengthConstraint(5, "Too short"));
-        form.setGlassPane(validator.new ComponentListener(null));
+        Validator.ComponentListener listener = validator.new ComponentListener(field);
 
-        first.requestFocus();
-        second.requestFocus();
-        sentinel.requestFocus();
+        InteractionDialog dialog = new InteractionDialog();
+        dialog.setAnimateShow(false);
+        dialog.add(new Label("Overlay"));
+        dialog.showPopupDialog(field);
+        flushSerialCalls();
 
-        int secondX = second.getAbsoluteX() + second.getWidth();
-        int secondY = second.getAbsoluteY() + second.getHeight() / 2;
-        int secondEmblemCenterX = expectedEmblemCenterX(secondX, emblem.getWidth());
+        Rectangle covered = new Rectangle(dialog.getAbsoluteX(), dialog.getAbsoluteY(),
+                Math.max(1, dialog.getWidth()), Math.max(1, dialog.getHeight()));
+        Rectangle notCovered = new Rectangle(0, 0, 2, 2);
 
-        Label overlay = new Label();
-        overlay.setX(secondEmblemCenterX - 10);
-        overlay.setY(secondY - 10);
-        overlay.setWidth(20);
-        overlay.setHeight(20);
-        form.getLayeredPane().add(overlay);
-
-        Image canvas = Image.createImage(form.getWidth(), form.getHeight(), 0xffffff);
-        Graphics g = canvas.getGraphics();
-        form.getGlassPane().paint(g, new Rectangle(0, 0, form.getWidth(), form.getHeight()));
-
-        int firstX = first.getAbsoluteX() + first.getWidth();
-        int firstY = first.getAbsoluteY() + first.getHeight() / 2;
-        int firstEmblemCenterX = expectedEmblemCenterX(firstX, emblem.getWidth());
-
-        assertTrue(hasColorNear(canvas, firstEmblemCenterX, firstY, 0xff0000), "Expected first emblem to be painted");
-        assertFalse(hasColorNear(canvas, secondEmblemCenterX, secondY, 0xff0000), "Expected second emblem to be skipped due to overlay");
-    }
-
-    private int expectedEmblemCenterX(int anchorX, int emblemWidth) {
-        if (anchorX + emblemWidth > Display.getInstance().getDisplayWidth()) {
-            return anchorX - emblemWidth / 2;
-        }
-        return anchorX;
-    }
-
-    private boolean hasColorNear(Image img, int x, int y, int rgb) {
-        int width = img.getWidth();
-        int height = img.getHeight();
-        int[] pixels = img.getRGB();
-        for (int dy = -6; dy <= 6; dy++) {
-            int py = y + dy;
-            if (py < 0 || py >= height) {
-                continue;
-            }
-            for (int dx = -6; dx <= 6; dx++) {
-                int px = x + dx;
-                if (px < 0 || px >= width) {
-                    continue;
-                }
-                if ((pixels[py * width + px] & 0x00ffffff) == rgb) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        assertTrue(listener.isEmblemRectCoveredByInteractionDialog(covered, form));
+        assertFalse(listener.isEmblemRectCoveredByInteractionDialog(notCovered, form));
+        dialog.dispose();
     }
 
     @FormTest

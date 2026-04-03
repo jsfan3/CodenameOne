@@ -788,6 +788,18 @@ public class Validator {
                     if (isPointCoveredByFormLayer(xpos, ypos, componentForm)) {
                         continue;
                     }
+                    int emblemWidth = validationFailedEmblem.getWidth();
+                    int emblemHeight = validationFailedEmblem.getHeight();
+                    int drawX;
+                    if (xpos + emblemWidth > Display.getInstance().getDisplayWidth()) {
+                        drawX = xpos - emblemWidth;
+                    } else {
+                        drawX = xpos - emblemWidth / 2;
+                    }
+                    int drawY = ypos - emblemHeight / 2;
+                    if (isEmblemRectCoveredByInteractionDialog(new Rectangle(drawX, drawY, emblemWidth, emblemHeight), componentForm)) {
+                        continue;
+                    }
 
                     Container parent = c.getParent();
                     visibleRect = parent.getVisibleBounds(visibleRect);
@@ -799,11 +811,7 @@ public class Validator {
 
                     int[] originalClip = g.getClip();
                     g.setClip(visibleRect);
-                    if (xpos + validationFailedEmblem.getWidth() > Display.getInstance().getDisplayWidth()) {
-                        g.drawImage(validationFailedEmblem, xpos - validationFailedEmblem.getWidth(), ypos - validationFailedEmblem.getHeight() / 2);
-                    } else {
-                        g.drawImage(validationFailedEmblem, xpos - validationFailedEmblem.getWidth() / 2, ypos - validationFailedEmblem.getHeight() / 2);
-                    }
+                    g.drawImage(validationFailedEmblem, drawX, drawY);
                     g.setClip(originalClip);
                 }
             }
@@ -834,6 +842,40 @@ public class Validator {
                 }
             }
             return false;
+        }
+
+        boolean isEmblemRectCoveredByInteractionDialog(Rectangle emblemRect, Form form) {
+            if (form == null || emblemRect == null) {
+                return false;
+            }
+            return containsVisibleInteractionDialogCoveringRect(form.getLayeredPane(InteractionDialog.class, true), emblemRect) ||
+                    containsVisibleInteractionDialogCoveringRect(form.getFormLayeredPane(InteractionDialog.class, true), emblemRect);
+        }
+
+        private boolean containsVisibleInteractionDialogCoveringRect(Container container, Rectangle rect) {
+            if (container == null || !container.isVisible()) {
+                return false;
+            }
+            for (int i = 0; i < container.getComponentCount(); i++) {
+                Component child = container.getComponentAt(i);
+                if (child instanceof InteractionDialog && child.isVisible()) {
+                    if (rectanglesIntersect(rect, child.getAbsoluteX(), child.getAbsoluteY(), child.getWidth(), child.getHeight())) {
+                        return true;
+                    }
+                }
+                if (child instanceof Container && containsVisibleInteractionDialogCoveringRect((Container) child, rect)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean rectanglesIntersect(Rectangle rect, int x, int y, int width, int height) {
+            int r1x2 = rect.getX() + rect.getWidth();
+            int r1y2 = rect.getY() + rect.getHeight();
+            int r2x2 = x + width;
+            int r2y2 = y + height;
+            return rect.getX() < r2x2 && r1x2 > x && rect.getY() < r2y2 && r1y2 > y;
         }
 
     }
