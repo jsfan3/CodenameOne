@@ -586,7 +586,7 @@ public class Tabs extends Container {
         if (tabUIID != null) {
             b.setUIID(tabUIID);
         }
-        FontImage.setIcon(b, font, icon, size);
+        b.setFontIcon(font, icon, size);
         createTabImpl(b);
         return b;
     }
