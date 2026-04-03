@@ -25,9 +25,6 @@
  *****************************************************************************/
 package bsh;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -1135,25 +1132,6 @@ public class NameSpace
                 + (this.classInstance != null ? " (class instance) " : "");
     }
 
-    /** Write object.
-     * @param s the s
-     * @throws IOException Signals that an I/O exception has occurred. For
-     *         serialization. Don't serialize non-serializable objects. */
-    private synchronized void writeObject(final ObjectOutputStream s)
-            throws IOException {
-        // clear name resolvers... don't know if this is necessary.
-        this.names.clear();
-        s.defaultWriteObject();
-    }
-    /** Re-initialize transient members.
-     * @param in the serializer
-     * @throws IOException mandatory throwing exception
-     * @throws ClassNotFoundException mandatory throwing exception */
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-
-        this.classCache = new HashMap<>();
-    }
     /** Invoke a method in this namespace with the specified args and
      * interpreter reference. No caller information or call stack is required.
      * The method will appear as if called externally from Java.

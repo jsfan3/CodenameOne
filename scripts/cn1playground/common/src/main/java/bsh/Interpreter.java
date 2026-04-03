@@ -28,7 +28,6 @@
 package bsh;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.Serializable;
@@ -1113,20 +1112,6 @@ public class Interpreter
     */
     public Interpreter getParent() {
         return parent;
-    }
-
-    /**
-        De-serialization setup.
-        Default out and err streams to stdout, stderr if they are null.
-    */
-    private void readObject(ObjectInputStream stream)
-        throws IOException, ClassNotFoundException
-    {
-        stream.defaultReadObject();
-
-        // set transient fields
-        setOut( System.out );
-        setErr( System.err );
     }
 
     /**

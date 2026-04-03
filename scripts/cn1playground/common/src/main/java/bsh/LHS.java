@@ -25,9 +25,6 @@
  *****************************************************************************/
 package bsh;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -327,29 +324,4 @@ class LHS implements ParserConstants, Serializable {
             +(nameSpace!=null ? " nameSpace = "+nameSpace.toString(): "");
     }
 
-    /** Reflect Field is not serializable, hide it.
-     * @param s serializer
-     * @throws IOException mandatory throwing exception */
-    private synchronized void writeObject(final ObjectOutputStream s) throws IOException {
-        if ( null != field ) {
-            this.object = field.getDeclaringClass();
-            this.varName = field.getName();
-            this.field = null;
-        }
-        s.defaultWriteObject();
-    }
-
-    /** Fetch field removed from serializer.
-     * @param in secializer.
-     * @throws IOException mandatory throwing exception
-     * @throws ClassNotFoundException mandatory throwing exception  */
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
-        in.defaultReadObject();
-        if ( null == this.object )
-            return;
-        Class<?> cls = this.object.getClass();
-        if ( this.object instanceof Class )
-            cls = (Class<?>) this.object;
-        this.field = BshClassManager.memberCache.get(cls).findField(varName);
-    }
 }

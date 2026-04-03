@@ -298,7 +298,7 @@ class JavaCharStream extends AbstractCharStream
                         final int startcolumn, 
                         final int buffersize)
   {
-    this(new java.io.InputStreamReader(dstream, encoding), startline, startcolumn, buffersize);
+    this(new java.io.InputStreamReader(dstream), startline, startcolumn, buffersize);
   }
 
   /** Constructor. */
@@ -340,7 +340,7 @@ class JavaCharStream extends AbstractCharStream
                      final int startcolumn,
                      final int buffersize)
   {
-    reInit(new java.io.InputStreamReader(dstream, encoding), startline, startcolumn, buffersize);
+    reInit(new java.io.InputStreamReader(dstream), startline, startcolumn, buffersize);
   }
   
   @Override
