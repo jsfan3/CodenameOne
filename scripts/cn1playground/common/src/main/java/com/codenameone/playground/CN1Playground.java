@@ -64,7 +64,7 @@ public class CN1Playground extends Lifecycle {
         CN.setProperty("platformHint.javascript.beforeUnloadMessage", null);
         theme = Resources.getGlobalResources();
         currentScript = resolveInitialScript();
-        currentCss = PlaygroundStateStore.loadCurrentCss();
+        currentCss = resolveInitialCss();
 
         appForm = new Form("Playground", new BorderLayout());
         appForm.setUIID("PlaygroundForm");
@@ -307,10 +307,15 @@ public class CN1Playground extends Lifecycle {
     private String resolveInitialScript() {
         String sharedScript = scriptFromUrl();
         if (sharedScript != null) {
-            PlaygroundStateStore.saveCurrentState(sharedScript, PlaygroundStateStore.loadCurrentCss(), PlaygroundStateStore.loadCurrentOutput());
+            PlaygroundStateStore.saveCurrentState(sharedScript, resolveInitialCss(), PlaygroundStateStore.loadCurrentOutput());
             return sharedScript;
         }
         return PlaygroundStateStore.loadCurrentScript();
+    }
+
+    private String resolveInitialCss() {
+        String sharedCss = cssFromUrl();
+        return sharedCss == null ? PlaygroundStateStore.loadCurrentCss() : sharedCss;
     }
 
     private String scriptFromUrl() {
@@ -330,6 +335,22 @@ public class CN1Playground extends Lifecycle {
         String sample = queryParam(href, "sample");
         PlaygroundExamples.Sample found = PlaygroundExamples.findBySlug(sample);
         return found == null ? null : found.script;
+    }
+
+    private String cssFromUrl() {
+        String href = CN.getProperty("browser.window.location.href", null);
+        if (href == null || href.isEmpty()) {
+            return null;
+        }
+
+        String css = queryParam(href, "css");
+        if (css != null && !css.isEmpty()) {
+            String decoded = decodeSharedScript(css);
+            if (decoded != null && !decoded.trim().isEmpty()) {
+                return decoded;
+            }
+        }
+        return null;
     }
 
     private String queryParam(String href, String name) {
@@ -388,7 +409,13 @@ public class CN1Playground extends Lifecycle {
             return;
         }
 
-        Display.getInstance().copyToClipboard(base + "?code=" + encoded);
+        StringBuilder shareUrl = new StringBuilder(base).append("?code=").append(encoded);
+        if (currentCss != null && !currentCss.isEmpty()) {
+            String encodedCss = encodeSharedScript(currentCss);
+            shareUrl.append("&css=").append(encodedCss);
+        }
+
+        Display.getInstance().copyToClipboard(shareUrl.toString());
     }
 
     private String encodeSharedScript(String script) {

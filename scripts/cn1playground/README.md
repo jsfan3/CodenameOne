@@ -151,12 +151,18 @@ Additional imports can be declared in scripts as needed.
 
 ### Shareable Links
 
-The playground can generate shareable URLs that contain the script source code. Use the **"Copy Shareable Playground URL"** option in the side menu to copy a link to the clipboard.
+The playground can generate shareable URLs that contain both the Java script source and CSS editor content. Use the **"Copy Shareable Playground URL"** option in the side menu to copy a link to the clipboard.
 
-**URL Format**: The generated URL uses a `code` query parameter with URL-safe Base64-encoded script content:
+**URL Format**:
+- Java source is stored in the `code` query parameter.
+- CSS source is stored in the `css` query parameter.
+- Both values use URL-safe Base64 encoding.
+
 ```
-https://example.com/playground?code=<base64-encoded-script>
+https://example.com/playground?code=<base64-encoded-script>&css=<base64-encoded-css>
 ```
+
+If the CSS editor is empty, the `css` parameter is omitted.
 
 The encoding uses URL-safe Base64 (replacing `+` with `-` and `/` with `_`, with padding removed).
 
