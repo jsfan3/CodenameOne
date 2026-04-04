@@ -233,13 +233,14 @@ public final class PlaygroundSmokeHarness {
                 "import com.codename1.ui.plaf.Border;\n"
                         + "import com.codename1.ui.plaf.UIManager;\n"
                         + "Button top = new Button(\"Top\");\n"
+                        + "String cls = top.getClass().getName();\n"
                         + "UIManager uim = UIManager.getInstance();\n"
                         + "boolean hasArrow = uim.isThemeConstant(\"PopupDialogArrowBool\", false);\n"
                         + "InteractionDialog it = new InteractionDialog();\n"
                         + "it.setUIID(\"PopupDialog\");\n"
                         + "Border b = it.getStyle().getBorder();\n"
                         + "Container c = BorderLayout.north(top);\n"
-                        + "c.add(BorderLayout.CENTER, new Label((hasArrow ? \"1\" : \"0\") + \" \" + (b == null ? \"null\" : b.getClass().getName())));\n"
+                        + "c.add(BorderLayout.CENTER, new Label(cls + \" \" + (hasArrow ? \"1\" : \"0\") + \" \" + (b == null ? \"null\" : b.getClass().getName())));\n"
                         + "c;\n",
                 context);
 

@@ -73,6 +73,18 @@ public final class Reflect {
                 throw e.toEvalError(callerInfo, callstack);
             }
         }
+        if ("getClass".equals(methodName) && (args == null || args.length == 0)) {
+            return object.getClass();
+        }
+        if ("hashCode".equals(methodName) && (args == null || args.length == 0)) {
+            return Integer.valueOf(object.hashCode());
+        }
+        if ("toString".equals(methodName) && (args == null || args.length == 0)) {
+            return object.toString();
+        }
+        if ("equals".equals(methodName) && args != null && args.length == 1) {
+            return Boolean.valueOf(object.equals(args[0]));
+        }
         if (PlaygroundContext.interceptMethodInvocation(object, methodName, unwrapArgs(args))) {
             return Primitive.VOID;
         }
