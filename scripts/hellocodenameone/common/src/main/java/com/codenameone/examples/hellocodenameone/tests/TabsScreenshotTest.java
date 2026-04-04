@@ -6,13 +6,10 @@ import com.codename1.ui.FontImage;
 import com.codename1.ui.Form;
 import com.codename1.ui.Tabs;
 import com.codename1.ui.layouts.BorderLayout;
-import com.codename1.ui.plaf.Style;
-import com.codename1.ui.plaf.UIManager;
 
 public class TabsScreenshotTest extends BaseTest {
     @Override
     public boolean runTest() {
-        applyTabStyles();
         Form form = createForm("Tabs", new BorderLayout(), "TabsBehavior");
         Container content = new Container(new BorderLayout());
         Tabs tabs = new Tabs();
@@ -27,18 +24,5 @@ public class TabsScreenshotTest extends BaseTest {
         form.add(BorderLayout.CENTER, content);
         form.show();
         return true;
-    }
-
-    private void applyTabStyles() {
-        UIManager manager = UIManager.getInstance();
-        Style tab = new Style(manager.getComponentStyle("TabsColorSync"));
-        tab.setFgColor(0xff0000);
-        tab.setFgAlpha(255);
-        manager.setComponentStyle("TabsColorSync", tab);
-
-        Style selected = new Style(tab);
-        selected.setFgColor(0x00aa00);
-        manager.setComponentSelectedStyle("TabsColorSync", selected);
-        manager.setComponentStyle("TabsColorSync", selected, "press");
     }
 }
