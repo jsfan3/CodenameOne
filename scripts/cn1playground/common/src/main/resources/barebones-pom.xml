@@ -2,15 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.codenameone.playground</groupId>
-        <artifactId>cn1playground</artifactId>
+        <groupId>com.example.myapp</groupId>
+        <artifactId>myappname</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
-    <groupId>com.codenameone.playground</groupId>
-    <artifactId>cn1playground-common</artifactId>
+    <groupId>com.example.myapp</groupId>
+    <artifactId>myappname-common</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-
 
     <!-- Add your cn1lib dependencies to this section -->
     <dependencies>
@@ -22,15 +21,6 @@
             <groupId>com.codenameone</groupId>
             <artifactId>codenameone-javase</artifactId>
             <scope>test</scope>
-        </dependency>
-
-
-        <dependency>
-          <artifactId>cn1playground-ZipSupport</artifactId>
-          <groupId>com.codenameone.playground</groupId>
-          <version>1.0-SNAPSHOT</version>
-          <classifier>common</classifier>
-          <type>jar</type>
         </dependency>
 
         <!-- INJECT DEPENDENCIES -->
@@ -311,44 +301,11 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>generate-cn1-access-registry</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>sh</executable>
-                            <workingDirectory>${project.parent.basedir}</workingDirectory>
-                            <arguments>
-                                <argument>${project.parent.basedir}/tools/generate-cn1-access-registry.sh</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>17</source>
-                    <target>17</target>
-                    <excludes>
-                        <exclude>bsh/Console.java</exclude>
-                        <exclude>bsh/PreparsedScript.java</exclude>
-                        <exclude>bsh/FileReader.java</exclude>
-                        <exclude>bsh/CommandLineReader.java</exclude>
-                        <exclude>bsh/ExternalNameSpace.java</exclude>
-                        <exclude>bsh/classpath/**</exclude>
-                        <exclude>bsh/org/objectweb/asm/**</exclude>
-                        <exclude>bsh/engine/**</exclude>
-                        <exclude>bsh/servlet/**</exclude>
-                        <exclude>bsh/util/**</exclude>
-                        <exclude>bsh/commands/**</exclude>
-                    </excludes>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
             <plugin>
