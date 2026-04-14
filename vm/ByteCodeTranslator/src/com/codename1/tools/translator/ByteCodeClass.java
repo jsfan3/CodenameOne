@@ -66,6 +66,7 @@ public class ByteCodeClass {
     private String clsName;
     private String originalClassName;
     private String baseClass;
+    private String concreteClass;
     private List<String> baseInterfaces;
     private boolean isInterface;
     private boolean isAbstract;
@@ -340,6 +341,11 @@ public class ByteCodeClass {
             }
         }
         return null;
+    }
+
+    public boolean hasDeclaredNonAbstractMethod(String name, String desc) {
+        BytecodeMethod declaredMethod = findDeclaredMethod(name, desc);
+        return declaredMethod != null && !declaredMethod.isAbstract();
     }
 
     public void unmark() {
@@ -1889,6 +1895,14 @@ public class ByteCodeClass {
      */
     public String getBaseClass() {
         return baseClass;
+    }
+
+    public String getConcreteClass() {
+        return concreteClass;
+    }
+
+    public void setConcreteClass(String concreteClass) {
+        this.concreteClass = concreteClass;
     }
 
     public void setSourceFile(String sourceFile) {
