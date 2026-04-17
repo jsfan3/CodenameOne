@@ -92,7 +92,7 @@ This is probably the most important feature this week, but it isn't something mo
 
 Right now this has no impact on you. When you send a build or use Playground/Initializr, you would still use TeaVM and its port. So why are we doing this?
 
-TeaVM is a fantastic project. But it's heading in its own direction, which is different from ours. They are focusing on WASM which is not our choice. WASM makes sense if you want to write deep native code, not if you want to write UIs or front-end. We could fork TeaVM, but that would mean maintaining another port.
+TeaVM is a fantastic project. But it’s heading in its own direction, which is different from ours. We decided to consolidate the different ports to enable a singular portable consistent experience for Codename One developers.
 
 The value of maintaining a single VM that supports all the non-Java ports is powerful. By using ParparVM for our JavaScript port, we can move our support for Java language features at our own pace.
 
