@@ -103,3 +103,11 @@ I spent a lot of time this week on the issue tracker going through old issues. A
 It also stands for issues that are important to you and got buried under the mountain of issues. If there are any of those, then let us know. We won't fix a lot of those. Some issues are just out of scope, and our scope is already huge. A lot are just too old by now, and it's hard to tell what's going on. But we're doing our best to go through that list. 
 
 Over this past week we closed over 30 issues, but there are still over 500 open issues. We'd appreciate your help in reducing these.
+
+---
+
+## Discussion
+
+_Join the conversation via GitHub Discussions._
+
+{{< giscus >}}
