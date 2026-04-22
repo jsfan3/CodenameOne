@@ -24,68 +24,67 @@ interface Cn1ssDeviceRunnerHelper {
         Display display = Display.getInstance();
         if (display.isEdt()) {
             runnable.run();
+        } else if (isHtml5()) {
+            display.callSerially(runnable);
         } else {
             display.callSeriallyAndWait(runnable);
         }
     }
 
     static void emitCurrentFormScreenshot(String testName) {
+        emitCurrentFormScreenshot(testName, null);
+    }
+
+    static void emitCurrentFormScreenshot(String testName, Runnable onComplete) {
         String safeName = sanitizeTestName(testName);
         Form current = Display.getInstance().getCurrent();
         if (current == null) {
             println("CN1SS:ERR:test=" + safeName + " message=Current form is null");
-            println("CN1SS:END:" + safeName);
+            emitPlaceholderScreenshot(safeName);
+            complete(onComplete);
             return;
         }
         int width = Math.max(1, current.getWidth());
         int height = Math.max(1, current.getHeight());
-        Image[] img = new Image[1];
-        Display.getInstance().screenshot(screen -> img[0] = screen);
-        long time = System.currentTimeMillis();
-        Display.getInstance().invokeAndBlock(() -> {
-            while(img[0] == null) {
-                Util.sleep(50);
-                // timeout
-                if (System.currentTimeMillis() - time > 2000) {
-                    return;
-                }
-            }
-        });
-        Image screenshot = img[0];
-        if (screenshot == null) {
-            println("CN1SS:ERR:test=" + safeName + " message=Screenshot process timed out");
-            println("CN1SS:END:" + safeName);
-            return;
-        }
-        try {
-            ImageIO io = ImageIO.getImageIO();
-            if (io == null || !io.isFormatSupported(ImageIO.FORMAT_PNG)) {
-                println("CN1SS:ERR:test=" + safeName + " message=PNG encoding unavailable");
-                println("CN1SS:END:" + safeName);
+        Display.getInstance().screenshot(screen -> {
+            if (screen == null) {
+                println("CN1SS:ERR:test=" + safeName + " message=Screenshot callback returned null");
+                emitPlaceholderScreenshot(safeName);
+                complete(onComplete);
                 return;
             }
-            if(Display.getInstance().isSimulator()) {
-                io.save(screenshot, Storage.getInstance().createOutputStream(safeName + ".png"), ImageIO.FORMAT_PNG, 1);
-            }
-            ByteArrayOutputStream pngOut = new ByteArrayOutputStream(Math.max(1024, width * height / 2));
-            io.save(screenshot, pngOut, ImageIO.FORMAT_PNG, 1f);
-            byte[] pngBytes = pngOut.toByteArray();
-            println("CN1SS:INFO:test=" + safeName + " png_bytes=" + pngBytes.length);
-            emitChannel(pngBytes, safeName, "");
+            Image screenshot = screen;
+            try {
+                ImageIO io = ImageIO.getImageIO();
+                if (io == null || !io.isFormatSupported(ImageIO.FORMAT_PNG)) {
+                    println("CN1SS:ERR:test=" + safeName + " message=PNG encoding unavailable");
+                    emitPlaceholderScreenshot(safeName);
+                    return;
+                }
+                if(Display.getInstance().isSimulator()) {
+                    io.save(screenshot, Storage.getInstance().createOutputStream(safeName + ".png"), ImageIO.FORMAT_PNG, 1);
+                }
+                ByteArrayOutputStream pngOut = new ByteArrayOutputStream(Math.max(1024, width * height / 2));
+                io.save(screenshot, pngOut, ImageIO.FORMAT_PNG, 1f);
+                byte[] pngBytes = pngOut.toByteArray();
+                println("CN1SS:INFO:test=" + safeName + " png_bytes=" + pngBytes.length);
+                emitChannel(pngBytes, safeName, "");
 
-            byte[] preview = encodePreview(io, screenshot, safeName);
-            if (preview != null && preview.length > 0) {
-                emitChannel(preview, safeName, PREVIEW_CHANNEL);
-            } else {
-                println("CN1SS:INFO:test=" + safeName + " preview_jpeg_bytes=0 preview_quality=0");
+                byte[] preview = encodePreview(io, screenshot, safeName);
+                if (preview != null && preview.length > 0) {
+                    emitChannel(preview, safeName, PREVIEW_CHANNEL);
+                } else {
+                    println("CN1SS:INFO:test=" + safeName + " preview_jpeg_bytes=0 preview_quality=0");
+                }
+            } catch (IOException ex) {
+                println("CN1SS:ERR:test=" + safeName + " message=" + ex);
+                Log.e(ex);
+                emitPlaceholderScreenshot(safeName);
+            } finally {
+                screenshot.dispose();
+                complete(onComplete);
             }
-        } catch (IOException ex) {
-            println("CN1SS:ERR:test=" + safeName + " message=" + ex);
-            Log.e(ex);
-            println("CN1SS:END:" + safeName);
-        } finally {
-            screenshot.dispose();
-        }
+        });
     }
 
     static byte[] encodePreview(ImageIO io, Image screenshot, String safeName) throws IOException {
@@ -190,5 +189,38 @@ interface Cn1ssDeviceRunnerHelper {
 
     static void println(String line) {
         System.out.println(line);
+    }
+
+    static void emitPlaceholderScreenshot(String safeName) {
+        try {
+            ImageIO io = ImageIO.getImageIO();
+            if (io == null || !io.isFormatSupported(ImageIO.FORMAT_PNG)) {
+                println("CN1SS:END:" + safeName);
+                return;
+            }
+            Image placeholder = Image.createImage(1, 1, 0xffffffff);
+            try {
+                ByteArrayOutputStream pngOut = new ByteArrayOutputStream(128);
+                io.save(placeholder, pngOut, ImageIO.FORMAT_PNG, 1f);
+                byte[] pngBytes = pngOut.toByteArray();
+                println("CN1SS:INFO:test=" + safeName + " png_bytes=" + pngBytes.length + " placeholder=1");
+                emitChannel(pngBytes, safeName, "");
+            } finally {
+                placeholder.dispose();
+            }
+        } catch (Throwable t) {
+            println("CN1SS:ERR:test=" + safeName + " message=placeholder_emit_failed " + t);
+            println("CN1SS:END:" + safeName);
+        }
+    }
+
+    static void complete(Runnable runnable) {
+        if (runnable != null) {
+            runnable.run();
+        }
+    }
+
+    static boolean isHtml5() {
+        return "HTML5".equals(Display.getInstance().getPlatformName());
     }
 }
